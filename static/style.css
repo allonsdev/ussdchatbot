@@ -1,0 +1,209 @@
+/* Base */
+:root {
+  --bg: #f4f6f9;
+  --text: #222;
+  --muted: #666;
+  --card: #fff;
+  --accent: #00695c;
+  --accent-hover: #004d40;
+  --table-header: #00695c;
+  --table-header-text: #fff;
+  --row-alt: #f9f9f9;
+  --border: #e5e7eb;
+  --shadow: rgba(0, 0, 0, 0.08);
+}
+
+:root.dark {
+  --bg: #0f1419;
+  --text: #e6edf3;
+  --muted: #9aa4ad;
+  --card: #111820;
+  --accent: #16a34a;
+  --accent-hover: #15803d;
+  --table-header: #0b1f17;
+  --table-header-text: #d1fae5;
+  --row-alt: #0d1620;
+  --border: #1f2937;
+  --shadow: rgba(0, 0, 0, 0.35);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Header */
+header {
+  background: var(--accent);
+  color: white;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+  padding: 8px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.theme-toggle:hover { background: rgba(255,255,255,0.25); }
+
+/* Layout */
+.container {
+  padding: 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Filters card */
+.filters {
+  margin-bottom: 20px;
+  background: var(--card);
+  padding: 14px;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.filters h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.filters label {
+  margin-right: 10px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.filters select {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  margin-right: 10px;
+}
+
+.filters button {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.filters button:hover { background: var(--accent-hover); }
+
+/* Table */
+.table-card {
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px var(--shadow);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+th {
+  background: var(--table-header);
+  color: var(--table-header-text);
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+tr:nth-child(even) td { background: var(--row-alt); }
+
+/* Actions cell */
+.actions form {
+  margin: 0;
+}
+
+.actions textarea {
+  width: 100%;
+  min-height: 54px;
+  resize: vertical;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 10px;
+  background: var(--card);
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.actions .btn {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.02s ease;
+  margin-right: 8px;
+}
+
+.actions .btn.alt {
+  background: #374151; /* neutral for call */
+}
+:root.dark .actions .btn.alt { background: #273142; }
+
+.actions .btn:hover { background: var(--accent-hover); }
+.actions .btn:active { transform: translateY(1px); }
+
+/* Status chips */
+.status-chip {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+}
+
+.status-pending { background: #fff3cd; color: #7a5c00; border-color: #ffe69c; }
+.status-resolved { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+.status-call { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  th, td { padding: 10px; }
+  header h1 { font-size: 18px; }
+}
+
