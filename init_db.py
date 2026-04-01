@@ -1,151 +1,316 @@
 import sqlite3
-import random
-import datetime
-from faker import Faker
 
 DB = "support.db"
-fake = Faker()
 
-
-def get_connection():
-    return sqlite3.connect(DB)
-
-
-def seed_database():
-
-    conn = get_connection()
+def init_db():
+    conn = sqlite3.connect(DB)
     c = conn.cursor()
 
-    print("🌱 Seeding database...")
+    print("🛠️ Initializing database...")
 
     # ----------------------------
-    # 1️⃣ Add More Agents
+    # AGENTS
     # ----------------------------
-    agents = []
-    for i in range(3, 11):
-        agent_id = f"A{i:02}"
-        agents.append((
-            agent_id,
-            "password123",
-            fake.name(),
-            "support"
-        ))
-
-    c.executemany("""
-        INSERT OR IGNORE INTO agents (agent_id, password, full_name, role)
-        VALUES (?, ?, ?, ?)
-    """, agents)
-
-    print("✅ Agents inserted")
-
-    # Fetch all agents
-    c.execute("SELECT agent_id FROM agents")
-    agent_ids = [row[0] for row in c.fetchall()]
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS agents (
+        agent_id TEXT PRIMARY KEY,
+        password TEXT,
+        full_name TEXT,
+        role TEXT
+    )
+    """)
 
     # ----------------------------
-    # 2️⃣ Insert Issues
+    # USERS
     # ----------------------------
-    issues = []
-    priorities = ["Low", "Medium", "High"]
-    statuses = ["Open", "In Progress", "Resolved"]
-    categories = ["Network", "Billing", "SIM", "Data", "VAS"]
-    escalation_types = ["Normal", "Urgent", "VIP"]
-
-    for _ in range(200):
-        created_at = fake.date_time_this_year()
-        sla_due = created_at + datetime.timedelta(hours=24)
-
-        status = random.choice(statuses)
-        closed_at = created_at + datetime.timedelta(hours=random.randint(1, 48)) if status == "Resolved" else None
-
-        issues.append((
-            fake.msisdn()[:10],
-            fake.sentence(),
-            random.choice(escalation_types),
-            status,
-            created_at,
-            random.choice(agent_ids),
-            fake.sentence() if status == "Resolved" else None,
-            closed_at,
-            random.choice(priorities),
-            random.choice(categories),
-            sla_due,
-            "Breached" if closed_at and closed_at > sla_due else "Within SLA"
-        ))
-
-    c.executemany("""
-        INSERT INTO issues (
-            phone, issue, escalation_type, status,
-            created_at, agent_id, resolution_notes,
-            closed_at, priority, category,
-            sla_due, sla_status
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, issues)
-
-    print("✅ Issues inserted")
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        phone TEXT PRIMARY KEY,
+        pin TEXT,
+        password TEXT,
+        created_at TIMESTAMP
+    )
+    """)
 
     # ----------------------------
-    # 3️⃣ Insert Tasks
+    # WALLETS
     # ----------------------------
-    tasks = []
-
-    for _ in range(100):
-        due_date = datetime.datetime.utcnow() + datetime.timedelta(days=random.randint(1, 5))
-
-        tasks.append((
-            random.choice(agent_ids),
-            "Follow up customer",
-            fake.text(max_nb_chars=100),
-            random.choice(["Pending", "In Progress", "Completed"]),
-            due_date
-        ))
-
-    c.executemany("""
-        INSERT INTO tasks (
-            agent_id, title, description,
-            status, due_date
-        )
-        VALUES (?, ?, ?, ?, ?)
-    """, tasks)
-
-    print("✅ Tasks inserted")
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS wallets (
+        phone TEXT PRIMARY KEY,
+        balance REAL DEFAULT 0
+    )
+    """)
 
     # ----------------------------
-    # 4️⃣ Insert KPI Snapshots
+    # TRANSACTIONS
     # ----------------------------
-    kpis = []
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS transactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        phone TEXT,
+        amount REAL,
+        type TEXT,
+        status TEXT,
+        created_at TIMESTAMP
+    )
+    """)
 
-    for _ in range(30):
-        total = random.randint(50, 300)
-        resolved = random.randint(20, total)
-        pending = total - resolved
+    # ----------------------------
+    # OTP CODES
+    # ----------------------------
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS otp_codes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        phone TEXT,
+        code TEXT,
+        status TEXT,
+        created_at TIMESTAMP
+    )
+    """)
 
-        kpis.append((
-            datetime.datetime.utcnow(),
-            total,
-            resolved,
-            pending,
-            random.randint(30, 200),
-            round(random.uniform(10, 40), 2),  # avg SLA hours
-            round(random.uniform(0.05, 0.25), 2)  # churn rate
-        ))
+    # ----------------------------
+    # USSD FLOW SESSIONS (STATE)
+    # ----------------------------
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS sessions (
+        session_id TEXT PRIMARY KEY,
+        phone TEXT,
+        authenticated INTEGER DEFAULT 0,
+        step INTEGER DEFAULT 0,
+        last_input TEXT,
+        status TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
 
-    c.executemany("""
-        INSERT INTO kpi_snapshots (
-            snapshot_date, total, resolved,
-            pending, calls, avg_sla, churn_rate
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, kpis)
+    # ----------------------------
+    # USSD ANALYTICS SESSIONS
+    # ----------------------------
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS ussd_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id TEXT,
+        phone TEXT,
+        status TEXT,
+        last_input TEXT,
+        step INTEGER,
+        created_at TIMESTAMP
+    )
+    """)
 
-    print("✅ KPI snapshots inserted")
+    # ----------------------------
+    # ISSUES / TICKETS
+    # ----------------------------
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS issues (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ticket_id TEXT UNIQUE,
+        phone TEXT,
+        issue TEXT,
+        escalation_type TEXT,
+        status TEXT,
+        created_at TIMESTAMP,
+        agent_id TEXT,
+        resolution_notes TEXT,
+        closed_at TIMESTAMP,
+        priority TEXT,
+        category TEXT,
+        sla_due TIMESTAMP,
+        sla_status TEXT
+    )
+    """)
+
+    # ----------------------------
+    # CALLBACKS
+    # ----------------------------
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS callbacks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        phone TEXT,
+        status TEXT,
+        created_at TIMESTAMP
+    )
+    """)
+
+    # ----------------------------
+    # TASKS
+    # ----------------------------
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        agent_id TEXT,
+        title TEXT,
+        description TEXT,
+        status TEXT,
+        due_date TIMESTAMP
+    )
+    """)
+
+    # ----------------------------
+    # NOTIFICATIONS
+    # ----------------------------
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        phone TEXT,
+        message TEXT,
+        status TEXT,
+        created_at TIMESTAMP
+    )
+    """)
+
+    # ----------------------------
+    # KPI SNAPSHOTS
+    # ----------------------------
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS kpi_snapshots (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        snapshot_date TIMESTAMP,
+        total INTEGER,
+        resolved INTEGER,
+        pending INTEGER,
+        calls INTEGER,
+        avg_sla REAL,
+        churn_rate REAL
+    )
+    """)
+
+    # ----------------------------
+    # FAQS (CHATBOT FALLBACK)
+    # ----------------------------
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS faqs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question TEXT,
+        answer TEXT
+    )
+    """)
 
     conn.commit()
     conn.close()
 
-    print("🎉 Database seeding completed successfully!")
+    print("✅ Database initialized successfully!")
 
 
 if __name__ == "__main__":
-    seed_database()
+    init_db()
+    import sqlite3
+
+DB = "support.db"
+
+def migrate_db():
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+
+    print("🛠️ Running database migration...")
+
+    # --------------------------
+    # SESSIONS (ADD NEW FIELDS)
+    # --------------------------
+    try:
+        c.execute("ALTER TABLE sessions ADD COLUMN lang TEXT DEFAULT 'en'")
+    except:
+        pass
+
+    try:
+        c.execute("ALTER TABLE sessions ADD COLUMN status TEXT DEFAULT 'STARTED'")
+    except:
+        pass
+
+    try:
+        c.execute("ALTER TABLE sessions ADD COLUMN authenticated INTEGER DEFAULT 0")
+    except:
+        pass
+
+    try:
+        c.execute("ALTER TABLE sessions ADD COLUMN step INTEGER DEFAULT 0")
+    except:
+        pass
+
+    # --------------------------
+    # OTP CODES (FIX + SAFETY)
+    # --------------------------
+    try:
+        c.execute("ALTER TABLE otp_codes ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    except:
+        pass
+
+    try:
+        c.execute("ALTER TABLE otp_codes ADD COLUMN status TEXT DEFAULT 'PENDING'")
+    except:
+        pass
+
+    # --------------------------
+    # USERS (ENSURE PIN FLOW SAFE)
+    # --------------------------
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN created_at TIMESTAMP")
+    except:
+        pass
+
+    # --------------------------
+    # WALLETS (SAFE INIT DEFAULT)
+    # --------------------------
+    try:
+        c.execute("ALTER TABLE wallets ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    except:
+        pass
+
+    # --------------------------
+    # TRANSACTIONS (IMPROVE TRACKING)
+    # --------------------------
+    try:
+        c.execute("ALTER TABLE transactions ADD COLUMN receiver TEXT")
+    except:
+        pass
+
+    try:
+        c.execute("ALTER TABLE transactions ADD COLUMN reference TEXT")
+    except:
+        pass
+
+    # --------------------------
+    # ISSUES (YOU ALREADY GOOD BUT ENSURE CONSISTENCY)
+    # --------------------------
+    try:
+        c.execute("ALTER TABLE issues ADD COLUMN updated_at TIMESTAMP")
+    except:
+        pass
+
+    try:
+        c.execute("ALTER TABLE issues ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    except:
+        pass
+
+    # --------------------------
+    # CALLBACKS
+    # --------------------------
+    try:
+        c.execute("ALTER TABLE callbacks ADD COLUMN status TEXT DEFAULT 'PENDING'")
+    except:
+        pass
+
+    # --------------------------
+    # USSD SESSIONS (OPTIONAL TRACKING TABLE)
+    # --------------------------
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS ussd_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id TEXT,
+        phone TEXT,
+        input TEXT,
+        step TEXT,
+        status TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+    print("✅ Migration completed successfully!")
+
+
+if __name__ == "__main__":
+    migrate_db()

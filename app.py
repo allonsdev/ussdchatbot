@@ -20,7 +20,27 @@ import subprocess
 import urllib.parse
 import shlex
 import os
+# --------------------------
+from flask import Flask, request
+import sqlite3
+from datetime import datetime
+import uuid
+import random
 
+STATE_START = "START"
+STATE_AUTH_METHOD = "AUTH_METHOD"
+STATE_PIN = "PIN"
+STATE_OTP = "OTP"
+STATE_AUTHENTICATED = "AUTHENTICATED"
+STATE_MAIN_MENU = "MAIN_MENU"
+STATE_WALLET = "WALLET"
+STATE_SUPPORT = "SUPPORT"
+STATE_ACCOUNT = "ACCOUNT"
+
+
+from db import init_db, migrate_db, get_db
+from session import create_session, get_session
+from routers import route
 # ================================================================
 # FLASK INITIALIZATION
 # ================================================================
@@ -105,111 +125,6 @@ def sanitize_number(phone):
     return phone
 
 
-def init_db():
-    """
-    Create all required tables if they don't exist.
-    Includes:
-    - issues
-    - agents
-    - tasks
-    - kpi_snapshots
-    - ussd_sessions
-    - churn
-    """
-    conn = get_db()
-    c = conn.cursor()
-
-    # ISSUES
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS issues (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        phone TEXT,
-        issue TEXT,
-        escalation_type TEXT,
-        status TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        agent_id TEXT,
-        resolution_notes TEXT,
-        closed_at TIMESTAMP,
-        priority TEXT,
-        category TEXT,
-        sla_due TIMESTAMP,
-        sla_status TEXT
-    )
-    """)
-
-    # AGENTS
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS agents (
-        agent_id TEXT PRIMARY KEY,
-        password TEXT NOT NULL,
-        full_name TEXT,
-        role TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    # TASK BOARD
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS tasks (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        agent_id TEXT,
-        title TEXT,
-        description TEXT,
-        status TEXT,
-        due_date TIMESTAMP,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    # KPI SNAPSHOTS
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS kpi_snapshots (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        snapshot_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        total INTEGER,
-        resolved INTEGER,
-        pending INTEGER,
-        calls INTEGER,
-        avg_sla REAL,
-        churn_rate REAL
-    )
-    """)
-
-    # USSD SESSION PERSISTENCE
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS ussd_sessions (
-        session_id TEXT PRIMARY KEY,
-        phone TEXT,
-        step TEXT,
-        data TEXT,
-        updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    # CHURN TRACKING
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS churn (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        organization TEXT,
-        risk_score REAL,
-        risk_level TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    # DEMO AGENTS
-    c.execute("SELECT COUNT(*) FROM agents")
-    if c.fetchone()[0] == 0:
-        c.execute("""
-        INSERT INTO agents (agent_id, password, full_name, role)
-        VALUES
-        ('A01','pass123','Admin One','support'),
-        ('A02','abc789','Admin Two','support')
-        """)
-
-    conn.commit()
-    conn.close()
 
 
 # ================================================================
@@ -222,8 +137,6 @@ def validate_agent(agent_id, password):
     Agent ID format: A01, A02, etc.
     Password: min 6 chars with letters + numbers.
     """
-    if not re.match(r'^[A-Z]\d{2}$', agent_id):
-        return "Incorrect format. Agent ID must be like A01."
     if not re.match(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$', password):
         return "Password must be at least 6 characters and include letters and numbers."
 
@@ -308,21 +221,21 @@ def calculate_sla(hours=48):
     return datetime.datetime.now() + datetime.timedelta(hours=hours)
 
 
-def update_sla_status():
-    conn = get_db()
-    c = conn.cursor()
+# def update_sla_status():
+#     conn = get_db()
+#     c = conn.cursor()
 
-    c.execute("""
-    UPDATE issues
-    SET sla_status = CASE
-        WHEN status='resolved' THEN 'met'
-        WHEN sla_due < CURRENT_TIMESTAMP THEN 'breached'
-        ELSE 'in_sla'
-    END
-    """)
+#     c.execute("""
+#     UPDATE issues
+#     SET sla_status = CASE
+#         WHEN status='resolved' THEN 'met'
+#         WHEN sla_due < CURRENT_TIMESTAMP THEN 'breached'
+#         ELSE 'in_sla'
+#     END
+#     """)
 
-    conn.commit()
-    conn.close()
+#     conn.commit()
+#     conn.close()
 
 
 # ================================================================
@@ -349,10 +262,60 @@ def auto_reply(phone):
 
 
 
+def send_booking_sms(phone, message, api_key="atsk_0907008d273f5c058da129dd4bc8a6a733dd057c5e7eaa21f118f6c60094845b0748e03a", username="sandbox"):
+    if not verify_tls13():
+        print("❌ Cannot send SMS: TLS 1.3 not supported.")
+        return
+
+    # URL-encode form data
+    data = {
+        "username": username,
+        "to": phone,
+        "message": message
+    }
+    encoded_data = urllib.parse.urlencode(data)
+
+    # Build curl command
+    cmd = f'curl -s -X POST https://api.sandbox.africastalking.com/version1/messaging -d "{encoded_data}" -H "apiKey: {api_key}"'
+
+    # Run the command
+    result = subprocess.run(shlex.split(cmd), capture_output=True, text=True)
+
+    print("\n📩 SMS API Response:")
+    print(result.stdout.strip())
+    if result.stderr.strip():
+        print("Errors:", result.stderr.strip())
 
 # --------------------------
 # Step 3: Example usage
 # --------------------------
+
+
+def send_booking(phone, message, api_key="atsk_0907008d273f5c058da129dd4bc8a6a733dd057c5e7eaa21f118f6c60094845b0748e03a", username="sandbox"):
+    if not verify_tls13():
+        print("❌ Cannot send SMS: TLS 1.3 not supported.")
+        return
+    
+    
+    messagev2 ="Hello! I need your assistance. Could you please call me back? at this number" + str(phone)+ " Thank you."
+    data = {
+        "username": username,
+        "to": phone,
+        "message": messagev2
+    }
+    encoded_data = urllib.parse.urlencode(data)
+
+    # Build curl command
+    cmd = f'curl -s -X POST https://api.sandbox.africastalking.com/version1/messaging -d "{encoded_data}" -H "apiKey: {api_key}"'
+
+    # Run the command
+    result = subprocess.run(shlex.split(cmd), capture_output=True, text=True)
+
+    print("\n📩 SMS API Response:")
+    print(result.stdout.strip())
+    if result.stderr.strip():
+        print("Errors:", result.stderr.strip())
+
 
 
 def verify_tls13(host="api.sandbox.africastalking.com", port=443):
@@ -486,18 +449,27 @@ def login():
     return render_template("login.html")
 
 
-@app.route('/')
-def dashboard():
+@app.route('/address', methods=['POST'])
+def address_issue():
     if 'agent_id' not in session:
         return redirect('/login')
 
-    status = request.args.get("status")
-    escalation_type = request.args.get("type")
+    issue_id = request.form.get('issue_id')
+    topic    = request.form.get('topic')
+    comment  = request.form.get('comment')
 
-    update_sla_status()
-    issues = get_issues(status, escalation_type)
+    conn = sqlite3.connect("support.db")
+    c = conn.cursor()
+    c.execute("""
+        UPDATE issues
+        SET resolution_notes = ?,
+            category = ?
+        WHERE id = ?
+    """, (comment, topic, issue_id))
+    conn.commit()
+    conn.close()
 
-    return render_template("dashboard.html", issues=issues)
+    return redirect('/')
 
 
 @app.route('/resolve', methods=['POST'])
@@ -505,45 +477,216 @@ def resolve_issue():
     if 'agent_id' not in session:
         return redirect('/login')
 
-    agent_id = session['agent_id']
-    issue_id = request.form['issue_id']
-    action = request.form['action']
-    message = request.form.get('message', '')
+    issue_id         = request.form.get('issue_id')
+    resolution_notes = request.form.get('resolution_notes')
+    agent_id         = session['agent_id']
 
-    conn = get_db()
-    c = conn.cursor()
-    phone = c.execute("SELECT phone FROM issues WHERE id=?", (issue_id,)).fetchone()[0]
-    conn.close()
 
-    phone = sanitize_number(phone)
-    status = "pending"
+    phone = "+27707317823"
+    if not phone:
+        return redirect('/')
 
-    if action == "sms":
-        if send_sms(phone, message):
-            status = "resolved"
-            auto_reply(phone)
-        else:
-            status = "failed"
+    message = f"{issue_id}: {resolution_notes}"
 
-    elif action == "call":
-        status = "Call Initiated"
-        print(f"Call request: {phone} by {agent_id}")
-
-    conn = get_db()
+    # Send SMS via TLS curl method
+    send_sms_tls(phone, message, api_key="atsk_0907008d273f5c058da129dd4bc8a6a733dd057c5e7eaa21f118f6c60094845b0748e03a", username="sandbox")
+    conn = sqlite3.connect("support.db")
     c = conn.cursor()
     c.execute("""
-    UPDATE issues SET status=?, agent_id=?, resolution_notes=?, closed_at=?
-    WHERE id=?
-    """, (status, agent_id, message, datetime.datetime.now(), issue_id))
+        UPDATE issues
+        SET status           = 'Resolved',
+            resolution_notes = ?,
+            agent_id         = ?,
+            closed_at        = CURRENT_TIMESTAMP,
+            sla_status       = CASE
+                                 WHEN sla_due >= CURRENT_TIMESTAMP THEN 'Within SLA'
+                                 ELSE 'Breached'
+                               END
+        WHERE id = ?
+    """, (resolution_notes, agent_id, issue_id))
     conn.commit()
     conn.close()
 
-    snapshot_kpi()
-    return redirect(url_for('dashboard'))
+    return redirect('/')
 
 
-# ================================================================
-# CHART ENDPOINT
+
+
+@app.route('/')
+def dashboard():
+    if 'agent_id' not in session:
+        return redirect('/login')
+
+    conn = sqlite3.connect("support.db")
+    c = conn.cursor()
+
+    # --------------------------
+    # FILTERS
+    # --------------------------
+    status = request.args.get("status")
+    escalation_type = request.args.get("type")
+
+    # --------------------------
+    # ISSUES
+    # --------------------------
+    query = "SELECT * FROM issues WHERE 1=1"
+    params = []
+
+    if status:
+        query += " AND status=?"
+        params.append(status)
+
+    if escalation_type:
+        query += " AND escalation_type=?"
+        params.append(escalation_type)
+
+    c.execute(query, params)
+    issues = c.fetchall()
+
+    # --------------------------
+    # KPIs
+    # --------------------------
+    c.execute("SELECT COUNT(*) FROM users")
+    users_count = c.fetchone()[0]
+
+    c.execute("SELECT COUNT(*) FROM agents")
+    agents_count = c.fetchone()[0]
+
+    c.execute("SELECT COUNT(*) FROM tasks WHERE status!='Done'")
+    open_tasks_count = c.fetchone()[0]
+
+    c.execute("SELECT COUNT(*) FROM notifications WHERE status='unread'")
+    unread_notifications = c.fetchone()[0]
+
+    c.execute("SELECT COUNT(*) FROM otp_codes WHERE status='used'")
+    otp_used_count = c.fetchone()[0]
+
+    c.execute("SELECT COUNT(*) FROM sessions")
+    sessions_count = c.fetchone()[0]
+
+    c.execute("SELECT COUNT(*) FROM faqs")
+    faqs_count = c.fetchone()[0]
+
+    # --------------------------
+    # TASKS TABLE
+    # --------------------------
+    c.execute("""
+        SELECT agent_id, title, status, due_date
+        FROM tasks
+        ORDER BY due_date ASC LIMIT 20
+    """)
+    tasks = c.fetchall()
+
+    # --------------------------
+    # NOTIFICATIONS TABLE
+    # --------------------------
+    c.execute("""
+        SELECT phone, message, status, created_at
+        FROM notifications
+        ORDER BY created_at DESC LIMIT 20
+    """)
+    notifications = c.fetchall()
+
+    # --------------------------
+    # CHART: KPI Snapshots Trend
+    # --------------------------
+    c.execute("""
+        SELECT snapshot_date, resolved, pending, avg_sla
+        FROM kpi_snapshots
+        ORDER BY snapshot_date ASC LIMIT 30
+    """)
+    snapshot_raw = c.fetchall()
+    snapshot_labels = [row[0] for row in snapshot_raw]
+    snapshot_resolved = [row[1] for row in snapshot_raw]
+    snapshot_pending = [row[2] for row in snapshot_raw]
+    snapshot_avg_sla = [row[3] for row in snapshot_raw]
+
+    # --------------------------
+    # CHART: OTP Usage
+    # --------------------------
+    c.execute("""
+        SELECT status, COUNT(*)
+        FROM otp_codes
+        GROUP BY status
+    """)
+    otp_raw = dict(c.fetchall())
+    otp_labels = list(otp_raw.keys())
+    otp_data = list(otp_raw.values())
+
+    # --------------------------
+    # CHART: Task Status Breakdown
+    # --------------------------
+    c.execute("""
+        SELECT status, COUNT(*)
+        FROM tasks
+        GROUP BY status
+    """)
+    task_raw = c.fetchall()
+    task_status_labels = [row[0] for row in task_raw]
+    task_status_data = [row[1] for row in task_raw]
+
+    # --------------------------
+    # CHART: Wallet Balances (Top 10)
+    # --------------------------
+    c.execute("""
+        SELECT phone, balance
+        FROM wallets
+        ORDER BY balance DESC LIMIT 10
+    """)
+    wallet_raw = c.fetchall()
+    wallets= wallet_raw
+    wallet_labels = [row[0] for row in wallet_raw]
+    wallet_data = [row[1] for row in wallet_raw]
+
+    # --------------------------
+    # CHART: Session Status Breakdown
+    # --------------------------
+    c.execute("""
+        SELECT status, COUNT(*)
+        FROM sessions
+        GROUP BY status
+    """)
+    session_raw = c.fetchall()
+    session_status_labels = [row[0] for row in session_raw]
+    session_status_data = [row[1] for row in session_raw]
+
+    conn.close()
+
+    # --------------------------
+    # RENDER
+    # --------------------------
+    return render_template(
+        "dashboard.html",
+        issues=issues,
+        wallets=wallets,
+        # KPIs
+        users_count=users_count,
+        agents_count=agents_count,
+        open_tasks_count=open_tasks_count,
+        unread_notifications=unread_notifications,
+        otp_used_count=otp_used_count,
+        sessions_count=sessions_count,
+        faqs_count=faqs_count,
+
+        # Tables
+        tasks=tasks,
+        notifications=notifications,
+
+        # Charts
+        snapshot_labels=snapshot_labels,
+        snapshot_resolved=snapshot_resolved,
+        snapshot_pending=snapshot_pending,
+        snapshot_avg_sla=snapshot_avg_sla,
+        otp_labels=otp_labels,
+        otp_data=otp_data,
+        task_status_labels=task_status_labels,
+        task_status_data=task_status_data,
+        wallet_labels=wallet_labels,
+        wallet_data=wallet_data,
+        session_status_labels=session_status_labels,
+        session_status_data=session_status_data,
+    )
+    
 # ================================================================
 
 @app.route('/kpi')
@@ -618,137 +761,237 @@ def log_issue(session_id, phone_number, issue_text, escalation_type):
     conn.close()
 
 
+
+def get_db():
+    return sqlite3.connect(DB)
+
 # --------------------------
-# USSD ROUTE
+
 # --------------------------
+# LANGUAGES
+# --------------------------
+LANGUAGES = {
+    "1": "en",
+    "2": "nd",
+    "3": "sn"
+}
+
+TEXT = {
+    "welcome": {"en": "Welcome", "nd": "Siyakwamukela", "sn": "Tinokugamuchirai"},
+    "invalid": {"en": "Invalid input", "nd": "Okungavumelekile", "sn": "Zvisiri izvo"},
+    "invalid_pin": {"en": "Invalid PIN", "nd": "I-PIN ayilungile", "sn": "PIN haina kunaka"},
+    "invalid_choice": {"en": "Invalid choice", "nd": "Ukhetho alulungile", "sn": "Sarudzo haina kunaka"},
+    "session_error": {"en": "Session error", "nd": "Iphutha leseshini", "sn": "Session error"},
+    "enter_phone": {"en": "Enter phone number:", "nd": "Faka inombolo yocingo:", "sn": "Isa nhamba yefoni:"},
+    "select_option": {
+        "en": "Select option:\n1. Enter PIN\n2. Use OTP",
+        "nd": "Khetha inketho:\n1. Faka i-PIN\n2. Sebenzisa OTP",
+        "sn": "Sarudza:\n1. Isa PIN\n2. Shandisa OTP"
+    },
+    "enter_pin": {"en": "Enter your PIN", "nd": "Faka i-PIN yakho", "sn": "Isa PIN yako"},
+    "enter_otp": {"en": "Enter OTP", "nd": "Faka i-OTP", "sn": "Isa OTP"},
+    "main_menu": {
+        "en": "1. Wallet\n2. Support\n3. FAQ\n4. Account",
+        "nd": "1. I-Wallet\n2. Usizo\n3. FAQ\n4. I-Akhawunti",
+        "sn": "1. Wallet\n2. Rubatsiro\n3. FAQ\n4. Account"
+    },
+    "wallet": {
+        "en": "1. Balance\n2. Send Money\n3. Mini Statement",
+        "nd": "1. Ibhalansi\n2. Thumela Imali\n3. Umlando",
+        "sn": "1. Balance\n2. Tumira Mari\n3. Nhoroondo"
+    },
+    "support": {
+        "en": "1. Create Ticket\n2. Track Ticket\n3. Callback",
+        "nd": "1. Dala Ithikithi\n2. Landelela\n3. Call back",
+        "sn": "1. Gadzira Ticket\n2. Tarisa\n3. Callback"
+    },
+    "balance": {"en": "Your balance is", "nd": "Imali yakho ngu", "sn": "Mari yako i"},
+    "sent": {"en": "Sent", "nd": "Kuthunyelwe", "sn": "Watumira"},
+    "insufficient": {"en": "Insufficient balance", "nd": "Imali ayanele", "sn": "Mari haina kukwana"},
+    "enter_recipient": {"en": "Enter recipient", "nd": "Faka umamukeli", "sn": "Isa anogamuchira"},
+    "enter_amount": {"en": "Enter amount", "nd": "Faka inani", "sn": "Isa huwandu"},
+    "ticket_created": {"en": "Ticket created", "nd": "Ithikithi lidaliwe", "sn": "Ticket yagadzirwa"},
+    "enter_issue": {"en": "Describe issue", "nd": "Chaza inkinga", "sn": "Tsanangura dambudziko"},
+    "enter_ticket": {"en": "Enter ticket ID", "nd": "Faka i-ID", "sn": "Isa ticket ID"},
+    "callback": {"en": "Callback requested", "nd": "I-call back iceliwe", "sn": "Callback yakumbirwa"},
+    "otp_sent": {"en": "OTP sent", "nd": "OTP ithunyelwe", "sn": "OTP yatumirwa"},
+    "otp_invalid": {"en": "Invalid OTP", "nd": "OTP ayilungile", "sn": "OTP haina kunaka"},
+    "pin_updated": {"en": "PIN updated", "nd": "PIN iguquliwe", "sn": "PIN yashandurwa"}
+}
+
+def t(key, lang="en"):
+    return TEXT.get(key, {}).get(lang, TEXT.get(key, {}).get("en", key))
+
+
+# --------------------------
+# DB
+# --------------------------
+def get_db():
+    return sqlite3.connect("support.db")
+
+
+# --------------------------
+# CORE FUNCTIONS
+# --------------------------
+def get_wallet(phone):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT balance FROM wallets WHERE phone=?", (phone,))
+    r = c.fetchone()
+
+    if not r:
+        c.execute("INSERT INTO wallets VALUES (?, ?)", (phone, 100))
+        conn.commit()
+        conn.close()
+        return 100
+
+    conn.close()
+    return r[0]
+
+
+def transfer_money(sender, receiver, amount):
+    if get_wallet(sender) < amount:
+        return False
+
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("UPDATE wallets SET balance = balance - ? WHERE phone=?", (amount, sender))
+    c.execute("INSERT OR IGNORE INTO wallets VALUES (?, 0)", (receiver,))
+    c.execute("UPDATE wallets SET balance = balance + ? WHERE phone=?", (amount, receiver))
+
+    conn.commit()
+    conn.close()
+    return True
+
+
+def send_sms(phone, msg):
+    print("SMS to", phone, ":", msg)
+
+
+def generate_otp(phone):
+    code = str(random.randint(1000, 9999))
+
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO otp_codes (phone, code, status, created_at) VALUES (?, ?, 'PENDING', CURRENT_TIMESTAMP)",
+        (phone, code)
+    )
+    conn.commit()
+    conn.close()
+
+    send_sms(phone, "Your OTP is " + code)
+    return code
+
+
+def verify_otp(phone, user_code):
+    conn = get_db()
+    c = conn.cursor()
+    row = c.execute("""
+        SELECT id, code, created_at
+        FROM otp_codes
+        WHERE phone=? AND status='PENDING'
+        ORDER BY created_at DESC
+        LIMIT 1
+    """, (phone,)).fetchone()
+
+    if not row:
+        return False
+
+    otp_id, code, created_at = row
+
+    created_time = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
+
+    if datetime.now() - created_time > timedelta(minutes=5):
+        return False
+
+    if code == user_code:
+        c.execute("UPDATE otp_codes SET status='USED' WHERE id=?", (otp_id,))
+        conn.commit()
+        conn.close()
+        return True
+
+    conn.close()
+    return False
+
+
+# --------------------------
+# MENUS
+# --------------------------
+def language_menu():
+    return "CON Select Language:\n1. English\n2. Ndebele\n3. Shona"
+
+
+def main_menu(lang):
+    return f"CON {t('welcome', lang)}\n{t('main_menu', lang)}"
+
+
+def wallet_menu(lang):
+    return f"CON {t('wallet', lang)}"
+
+
+def support_menu(lang):
+    return f"CON {t('support', lang)}"
+
+
+ 
+def _log_ussd(session_id: str, phone: str, service_code: str,
+               network_code: str, user_input: str, state: str, response: str):
+    """Append one row to the ussd_logs audit table."""
+    try:
+        conn = get_db()
+        conn.execute(
+            """
+            INSERT INTO ussd_logs
+                (session_id, phone, service_code, network_code, input, state, response, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE')
+            """,
+            (session_id, phone, service_code, network_code, user_input, state, response),
+        )
+        conn.commit()
+        conn.close()
+    except Exception as exc:
+        app.logger.warning("[ussd_log] failed: %s", exc)
+ 
+
 @app.route('/ussd', methods=['POST'])
 def ussd():
-
-    session_id = request.form.get('sessionId')
-    phone_number = request.form.get('phoneNumber')
-    text = request.form.get('text', '')
-
-    steps = text.split('*')
-    response = ""
-
-    # --------------------------
-    # Step 1: Language
-    # --------------------------
-    if text == "":
-        response = "CON Welcome to InnBucks Smart Support\nSarudza mutauro wako:\n1. English\n2. Shona"
-
-    # --------------------------
-    # English Main Menu
-    # --------------------------
-    elif text == "1":
-        response = "CON Main Menu:\n1. FAQs\n2. Other Issues\n3. Reset PIN\n4. Check Balance\n5. Send Money"
-
-    # --------------------------
-    # Shona Main Menu
-    # --------------------------
-    elif text == "2":
-        response = "CON Menyu Huru:\n1. Mibvunzo\n2. Dzimwe Nyaya\n3. Gadzirisa PIN\n4. Tarisa Balance\n5. Tumira Mari"
-
-    # --------------------------
-    # FAQs English
-    # --------------------------
-    elif text == "1*1":
-        response = (
-            "CON FAQs:\n"
-            "1. Network problems\n"
-            "2. Transaction failed\n"
-            "3. Refund process\n"
-            "4. Unlock account\n"
-            "5. How to pay bills"
-        )
-
-    # FAQs Shona
-    elif text == "2*1":
-        response = (
-            "CON Mibvunzo:\n"
-            "1. Dambudziko reNetwork\n"
-            "2. Kutadza kweTransaction\n"
-            "3. Maitiro eRefund\n"
-            "4. Kuvhura Akaunti\n"
-            "5. Maitiro ekubhadhara maBill"
-        )
-
-    # --------------------------
-    # FAQ Answers (English)
-    # --------------------------
-    elif text == "1*1*1":
-        response = "END Restart your phone or try again later."
-    elif text == "1*1*2":
-        response = "END Check network and balance then retry."
-    elif text == "1*1*3":
-        response = "END Contact merchant first then dial 569."
-    elif text == "1*1*4":
-        response = "END Dial 569 and follow instructions."
-    elif text == "1*1*5":
-        response = "END Dial *569# and choose Pay."
-
-    # --------------------------
-    # FAQ Answers (Shona)
-    # --------------------------
-    elif text == "2*1*1":
-        response = "END Tangazve foni yako kana edza gare gare."
-    elif text == "2*1*2":
-        response = "END Tarisa network kana balance yako."
-    elif text == "2*1*3":
-        response = "END Taura nemerchant wozodhayela 569."
-    elif text == "2*1*4":
-        response = "END Dhaayela 569 utevere mirairo."
-    elif text == "2*1*5":
-        response = "END Dhaayela *569# wobva wasarudza Pay."
-
-    # --------------------------
-    # OTHER ISSUES FLOW
-    # --------------------------
-    elif text == "1*2":
-        response = "CON Please describe your issue:"
-    elif text == "2*2":
-        response = "CON Nyora dambudziko rako:"
-
-    # Step: Issue entered → ask for phone number
-    elif (len(steps) == 3 and steps[1] == "2"):
-        response = "CON Please enter your phone number:"
-
-    # Step: Phone entered → log issue
-    elif (len(steps) == 4 and steps[1] == "2"):
-
-        issue_text = steps[2]
-        user_phone = steps[3]
-
-        log_issue(
-            session_id,
-            user_phone,
-            issue_text,
-            escalation_type="Normal"
-        )
-
-        if steps[0] == "1":
-            response = "END Your issue has been logged. An agent will contact you."
-        else:
-            response = "END Dambudziko ranyorwa. Mumiriri achakubatsirai."
-
-    # --------------------------
-    # Placeholder Features
-    # --------------------------
-    elif text in ["1*3", "2*3"]:
-        response = "END Reset PIN coming soon."
-    elif text in ["1*4", "2*4"]:
-        response = "END Check Balance coming soon."
-    elif text in ["1*5", "2*5"]:
-        response = "END Send Money coming soon."
-
-    else:
-        response = "END Invalid input."
-
-    return response
+    session_id   = request.form.get("sessionId",   "").strip()
+    phone        = request.form.get("phoneNumber", "").strip()
+    raw_text     = request.form.get("text",        "").strip()
+    service_code = request.form.get("serviceCode", "").strip()
+    network_code = request.form.get("networkCode", "").strip()
+    
+    
+    print(session_id)
+    app.logger.debug(
+        "USSD ← sessionId=%s phone=%s serviceCode=%s networkCode=%s text=%r",
+        session_id, phone, service_code, network_code, raw_text,
+    )
+ 
+    # ── Guard: require sessionId and phoneNumber ────────────────────────────
+    if not session_id or not phone:
+        return "END Missing required gateway fields (sessionId / phoneNumber).", 400
+ 
+    # ── Ensure a session row exists (idempotent) ────────────────────────────
+    if not get_session(session_id):
+        create_session(session_id, phone)
+ 
+    # ── Route to the correct state handler ─────────────────────────────────
+    response = route(session_id, phone, raw_text)
+ 
+    # ── Derive last user input and current state for logging ───────────────
+    steps      = [s.strip() for s in raw_text.split("*")] if raw_text else []
+    user_input = steps[-1] if steps else ""
+    session    = get_session(session_id)
+    state      = session["state"] if session else "UNKNOWN"
+ 
+    _log_ussd(session_id, phone, service_code, network_code, user_input, state, response)
+ 
+    app.logger.debug("USSD → %r", response)
+    return response, 200, {"Content-Type": "text/plain"}
 
 
-# --------------------------
-# RUN APP
-# --------------------------
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)

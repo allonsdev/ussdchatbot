@@ -1,42 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Agent Login | Telecom CRM</title>
+<meta charset="UTF-8">
+<title>Agent Login | Telecom CRM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<!-- Font Awesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
-    <style>
-        body {
-            background: linear-gradient(135deg, #0d6efd, #0a58ca);
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+<!-- Font -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
-        .login-card {
-            width: 100%;
-            max-width: 420px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
+<!-- Particles -->
+<script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
 
-        .language-switch {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-        }
+<style>
+* {
+    font-family: 'Poppins', sans-serif;
+}
 
-        .brand-title {
-            font-weight: 600;
-        }
-    </style>
+body {
+    margin: 0;
+    height: 100vh;
+    background: #0b0f19;
+    overflow: hidden;
+}
+
+/* SPLIT */
+.container-fluid {
+    height: 100vh;
+}
+
+/* LEFT SIDE */
+.left-side {
+    position: relative;
+    height: 100%;
+    background: radial-gradient(circle at 30% 30%, #0d6efd, #020617);
+}
+
+/* Animated gradient */
+.left-side::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(270deg, #0d6efd, #6610f2, #0dcaf0);
+    background-size: 600% 600%;
+    animation: gradientMove 12s ease infinite;
+    opacity: 0.25;
+}
+
+@keyframes gradientMove {
+    0% {background-position: 0%}
+    50% {background-position: 100%}
+    100% {background-position: 0%}
+}
+
+/* PARTICLES */
+#particles-js {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
+/* CENTER TEXT */
+.overlay-content {
+    position: relative;
+    z-index: 2;
+    color: white;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+
+    animation: fadeIn 1.5s ease;
+}
+
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(20px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+
+/* RIGHT SIDE */
+.right-side {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #020617;
+}
+
+/* GLASS CARD */
+.login-card {
+    width: 100%;
+    max-width: 400px;
+    padding: 40px;
+    border-radius: 25px;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 0 40px rgba(13,110,253,0.3);
+    color: white;
+    animation: fadeIn 1.5s ease;
+}
+
+/* FLOATING INPUT */
+.form-floating input {
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.form-floating label {
+    color: rgba(255,255,255,0.6);
+}
+
+.form-floating input:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 10px #0d6efd;
+}
+
+/* BUTTON */
+.btn-primary {
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    border: none;
+    transition: 0.3s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 0 20px #0d6efd;
+}
+
+/* LANGUAGE */
+.language-switch {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+}
+
+/* PASSWORD TOGGLE */
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    top: 18px;
+    cursor: pointer;
+    color: #aaa;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+    .left-side {
+        display: none;
+    }
+}
+</style>
 </head>
+
 <body>
 
 <div class="language-switch">
@@ -47,99 +170,122 @@
     </select>
 </div>
 
-<div class="card login-card p-4">
+<div class="container-fluid">
+<div class="row h-100">
+
+<!-- LEFT -->
+<div class="col-md-6 left-side d-none d-md-block">
+
+    <div id="particles-js"></div>
+
+    <div class="overlay-content">
+        <h1><i class="fa-solid fa-signal"></i> Telecom CRM</h1>
+        <p id="typing"></p>
+    </div>
+</div>
+
+<!-- RIGHT -->
+<div class="col-md-6 right-side">
+<div class="login-card">
 
     <div class="text-center mb-4">
-        <h3 class="brand-title text-primary">
-            <i class="fa-solid fa-signal"></i> Telecom CRM
-        </h3>
+        <h4 class="text-primary"><i class="fa-solid fa-user-shield"></i></h4>
         <p id="loginTitle">Agent Login Portal</p>
     </div>
 
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-danger">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
     <form method="post" action="{{ url_for('login') }}">
 
-        <div class="mb-3">
-            <label class="form-label" id="labelAgent">Agent ID</label>
-            <div class="input-group">
-                <span class="input-group-text">
-                    <i class="fa-solid fa-user"></i>
-                </span>
-                <input type="text" name="agent_id" class="form-control" required>
-            </div>
+        <div class="form-floating mb-3">
+            <input type="text" name="agent_id" class="form-control" placeholder="Agent ID" required>
+            <label id="labelAgent">Agent ID</label>
         </div>
 
-        <div class="mb-3">
-            <label class="form-label" id="labelPassword">Password</label>
-            <div class="input-group">
-                <span class="input-group-text">
-                    <i class="fa-solid fa-lock"></i>
-                </span>
-                <input type="password" name="password" class="form-control" required>
-            </div>
+        <div class="form-floating mb-3 position-relative">
+            <input type="password" id="password" name="password" class="form-control" placeholder="Password" required>
+            <label id="labelPassword">Password</label>
+            <i class="fa-solid fa-eye password-toggle" onclick="togglePassword()"></i>
         </div>
 
         <div class="mb-3 form-check">
-            <input type="checkbox" class="form-check-input" name="remember">
-            <label class="form-check-label" id="rememberLabel">Remember Me</label>
+            <input type="checkbox" class="form-check-input">
+            <label id="rememberLabel">Remember Me</label>
         </div>
 
-        <button type="submit" class="btn btn-primary w-100">
+        <button class="btn btn-primary w-100">
             <i class="fa-solid fa-right-to-bracket"></i>
             <span id="loginBtn">Login</span>
         </button>
+
     </form>
 
-    <hr>
+    <hr style="border-color: rgba(255,255,255,0.1);">
 
     <div class="text-center">
-        <small class="text-muted">
-            © 2026 Telecom CRM | SLA • Churn • USSD • SMS
+        <small style="opacity:0.6;">
+            © 2026 Telecom CRM • AI • Analytics
         </small>
     </div>
 
 </div>
+</div>
 
+</div>
+</div>
+
+<!-- PARTICLES -->
+<script>
+particlesJS("particles-js", {
+  particles: {
+    number: { value: 100 },
+    size: { value: 3 },
+    move: { speed: 1.5 },
+    line_linked: {
+      enable: true,
+      distance: 140,
+      color: "#0d6efd",
+      opacity: 0.3
+    }
+  }
+});
+</script>
+
+<!-- TYPING EFFECT -->
+<script>
+const text = "AI-powered Customer Intelligence Platform";
+let i = 0;
+
+function typeEffect() {
+    if (i < text.length) {
+        document.getElementById("typing").innerHTML += text.charAt(i);
+        i++;
+        setTimeout(typeEffect, 40);
+    }
+}
+typeEffect();
+</script>
+
+<!-- PASSWORD TOGGLE -->
+<script>
+function togglePassword() {
+    const pass = document.getElementById("password");
+    pass.type = pass.type === "password" ? "text" : "password";
+}
+</script>
+
+<!-- LANGUAGE -->
 <script>
 function switchLanguage(lang) {
-    const translations = {
-        en: {
-            title: "Agent Login Portal",
-            agent: "Agent ID",
-            password: "Password",
-            remember: "Remember Me",
-            login: "Login"
-        },
-        sn: {
-            title: "Nzvimbo Yekupinda yeMumiriri",
-            agent: "Chitupa cheMumiriri",
-            password: "Pasiwedhi",
-            remember: "Rangarira Ini",
-            login: "Pinda"
-        },
-        nd: {
-            title: "Indawo Yokungena Yomsebenzi",
-            agent: "I-ID Yomsebenzi",
-            password: "Iphasiwedi",
-            remember: "Ngikhumbule",
-            login: "Ngena"
-        }
+    const t = {
+        en: ["Agent Login Portal","Agent ID","Password","Remember Me","Login"],
+        sn: ["Nzvimbo Yekupinda","Chitupa","Pasiwedhi","Rangarira Ini","Pinda"],
+        nd: ["Indawo Yokungena","I-ID","Iphasiwedi","Ngikhumbule","Ngena"]
     };
 
-    document.getElementById("loginTitle").innerText = translations[lang].title;
-    document.getElementById("labelAgent").innerText = translations[lang].agent;
-    document.getElementById("labelPassword").innerText = translations[lang].password;
-    document.getElementById("rememberLabel").innerText = translations[lang].remember;
-    document.getElementById("loginBtn").innerText = translations[lang].login;
+    document.getElementById("loginTitle").innerText = t[lang][0];
+    document.getElementById("labelAgent").innerText = t[lang][1];
+    document.getElementById("labelPassword").innerText = t[lang][2];
+    document.getElementById("rememberLabel").innerText = t[lang][3];
+    document.getElementById("loginBtn").innerText = t[lang][4];
 }
 </script>
 

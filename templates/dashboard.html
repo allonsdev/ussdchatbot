@@ -1,203 +1,435 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Support Admin Dashboard</title>
+<meta charset="UTF-8" />
+<title>Admin Dashboard | Telecom CRM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<!-- CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css"/>
 
-  <!-- DataTables CSS -->
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+<script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
 
-  <style>
-    body { background: #f4f6fb; }
-    .card-kpi {
-      border-radius: 12px;
-      transition: transform 0.2s;
-      padding: 1rem;
-    }
-    .card-kpi:hover { transform: translateY(-4px); }
-    .status-chip {
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-    }
-    .status-pending { background: #ffeeba; }
-    .status-resolved { background: #d4edda; }
-    .status-call { background: #cce5ff; }
+<style>
+body { background:#020617; color:white; overflow-x:hidden; }
+#particles-js { position:fixed; width:100%; height:100%; z-index:0; }
+.main-content { position:relative; z-index:2; }
 
-    .sla-breached { background: #f8d7da; }
-    .sla-near { background: #fff3cd; }
-    .sla-ok { background: #d4edda; }
-  </style>
+.glass {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(15px);
+  border-radius:20px;
+  padding:20px;
+}
+
+.navbar {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+}
+
+.card-kpi {
+  text-align:center;
+  padding:20px;
+  border-radius:20px;
+  background: rgba(255,255,255,0.05);
+  transition:0.3s;
+}
+.card-kpi:hover {
+  transform:translateY(-5px);
+  box-shadow:0 0 15px #0d6efd;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg,#0d6efd,#6610f2);
+  border:none;
+}
+.btn-danger {
+  background: linear-gradient(135deg,#dc3545,#ff4d6d);
+  border:none;
+}
+
+table { color:white !important; }
+
+.dt-buttons .btn {
+  background: rgba(255,255,255,0.08)!important;
+  color:white!important;
+  border:none!important;
+  margin-right:5px;
+  border-radius:8px;
+}
+.dt-buttons .btn:hover {
+  background:#0d6efd!important;
+  box-shadow:0 0 10px #0d6efd;
+}
+
+/* Ensure the glass container keeps padding and sizing */
+.glass {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 1rem;
+    backdrop-filter: blur(10px);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Make canvas responsive and contained */
+.glass canvas {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 300px;
+}
+
+.glass h6 {
+    margin-bottom: 0.5rem;
+}
+.card-kpi {
+    padding: 1rem;
+    border-radius: 1rem;
+    backdrop-filter: blur(10px);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 100px;
+    transition: transform 0.2s;
+}
+.card-kpi:hover {
+    transform: translateY(-5px);
+}
+.card-kpi h6 {
+    margin: 0;
+    font-weight: 500;
+}
+.card-kpi h3 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+.kpi-icon {
+    font-size: 2rem;
+    opacity: 0.8;
+}
+.bg-total { background: #007bff; }
+.bg-resolved { background: #28a745; }
+.bg-pending { background: #ffc107; color: #000; }
+.bg-transactions { background: #17a2b8; }
+.bg-callbacks { background: #6f42c1; }
+.bg-sessions { background: #fd7e14; }
+.bg-users { background: linear-gradient(135deg,#0d6efd,#0dcaf0); }
+.bg-agents { background: linear-gradient(135deg,#6610f2,#d63384); }
+.bg-tasks { background: linear-gradient(135deg,#fd7e14,#ffc107); color:#000; }
+.bg-notif { background: linear-gradient(135deg,#20c997,#0d6efd); }
+.bg-otp { background: linear-gradient(135deg,#dc3545,#ff4d6d); }
+.bg-faqs { background: linear-gradient(135deg,#6f42c1,#0dcaf0); }
+
+/* Status badges */
+.badge-open { background:#ffc107; color:#000; }
+.badge-closed { background:#28a745; }
+.badge-pending { background:#fd7e14; }
+.badge-unread { background:#dc3545; }
+.badge-read { background:#6c757d; }
+
+/* Resolve button */
+.btn-resolve {
+  background: linear-gradient(135deg,#28a745,#20c997);
+  border:none;
+  color:#fff;
+  font-size:0.75rem;
+  padding:3px 10px;
+  border-radius:8px;
+}
+.btn-resolve:hover { opacity:0.85; }
+
+/* Section heading divider */
+.section-heading {
+  border-left: 4px solid #0d6efd;
+  padding-left: 10px;
+  margin: 30px 0 15px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing:0.5px;
+}
+</style>
 </head>
+
 <body>
 
-<div class="container-fluid mt-4">
-  <h2 class="mb-4">📊 Admin Dashboard</h2>
+<div id="particles-js"></div>
 
-  <!-- KPI CARDS -->
-  <div class="row g-3">
-    <div class="col-md-3">
-      <div class="card card-kpi text-center">
-        <h6>Total Issues</h6>
-        <h3 id="totalIssues">0</h3>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card card-kpi text-center">
-        <h6>Resolved</h6>
-        <h3 id="resolved">0</h3>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card card-kpi text-center">
-        <h6>Pending</h6>
-        <h3 id="pending">0</h3>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card card-kpi text-center">
-        <h6>Avg SLA (days)</h6>
-        <h3 id="avgSla">0</h3>
-      </div>
+<!-- NAVBAR -->
+<nav class="navbar px-4 main-content">
+<span class="navbar-brand text-white">
+  <i class="fa-solid fa-signal"></i> Telecom CRM
+</span>
+<div class="ms-auto">
+  <a href="/logout" class="btn btn-danger">
+    <i class="fa-solid fa-right-from-bracket"></i> Logout
+  </a>
+</div>
+</nav>
+
+<div class="container-fluid mt-4 main-content">
+<h3 class="mb-4">AI Support Dashboard</h3>
+
+<!-- KPI CARDS -->
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card-kpi glass bg-users">
+      <div><h6>Total Users</h6><h3>{{ users_count }}</h3></div>
+      <i class="fa-solid fa-users kpi-icon"></i>
     </div>
   </div>
-
-  <!-- CHARTS -->
-  <div class="row mt-4 g-3">
-    <div class="col-md-6">
-      <div class="card p-3">
-        <h6>Issues Trend</h6>
-        <canvas id="kpiChart"></canvas>
-      </div>
-    </div>
-    <div class="col-md-6">
-      <div class="card p-3">
-        <h6>SLA & Resolution</h6>
-        <canvas id="slaChart"></canvas>
-      </div>
+  <div class="col-md-4">
+    <div class="card-kpi glass bg-agents">
+      <div><h6>Agents</h6><h3>{{ agents_count }}</h3></div>
+      <i class="fa-solid fa-headset kpi-icon"></i>
     </div>
   </div>
-
-  <!-- FILTERS -->
-  <div class="card mt-4 p-3">
-    <h6>Filters</h6>
-    <form method="get">
-      <div class="row g-2">
-        <div class="col-md-4">
-          <select name="status" class="form-select">
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="resolved">Resolved</option>
-            <option value="failed">Failed</option>
-          </select>
-        </div>
-        <div class="col-md-4">
-          <select name="type" class="form-select">
-            <option value="">All Types</option>
-            <option value="sms">SMS</option>
-            <option value="call">Call</option>
-          </select>
-        </div>
-        <div class="col-md-4">
-          <button class="btn btn-primary w-100">Apply</button>
-        </div>
-      </div>
-    </form>
+  <div class="col-md-4">
+    <div class="card-kpi glass bg-tasks">
+      <div><h6>Open Tasks</h6><h3>{{ open_tasks_count }}</h3></div>
+      <i class="fa-solid fa-list-check kpi-icon"></i>
+    </div>
   </div>
-
-  <!-- ISSUES DATA TABLE -->
-  <div class="card mt-4 p-3">
-    <h6>Issues</h6>
-    <table id="issuesTable" class="table table-striped">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Phone</th>
-          <th>Issue</th>
-          <th>Status</th>
-          <th>Type</th>
-          <th>Created</th>
-          <th>SLA</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for issue in issues %}
-        <tr>
-          <td>{{ issue[0] }}</td>
-          <td>{{ issue[1] }}</td>
-          <td>{{ issue[2] }}</td>
-          <td>
-            {% if issue[4] == 'pending' %}
-              <span class="status-chip status-pending">Pending</span>
-            {% elif issue[4] == 'resolved' %}
-              <span class="status-chip status-resolved">Resolved</span>
-            {% elif issue[4] == 'Call Initiated' %}
-              <span class="status-chip status-call">Call</span>
-            {% else %}
-              {{ issue[4] }}
-            {% endif %}
-          </td>
-          <td>{{ issue[3] }}</td>
-          <td>{{ issue[5] }}</td>
-          <td>
-            {% if issue[7] and issue[7] < issue[5] %}
-              <span class="status-chip sla-breached">Breached</span>
-            {% elif issue[7] %}
-              <span class="status-chip sla-near">Due</span>
-            {% else %}
-              <span class="status-chip sla-ok">OK</span>
-            {% endif %}
-          </td>
-          <td>
-            
-              <button class="btn btn-sm btn-warning"
-                      data-bs-toggle="modal"
-                      data-bs-target="#addressModal"
-                      data-id="{{ issue[0] }}">
-                Address
-              </button>
-            
-          
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="col-md-4">
+    <div class="card-kpi glass bg-notif">
+      <div><h6>Unread Notifications</h6><h3>{{ unread_notifications }}</h3></div>
+      <i class="fa-solid fa-bell kpi-icon"></i>
+    </div>
   </div>
-
+  <div class="col-md-4">
+    <div class="card-kpi glass bg-otp">
+      <div><h6>OTP Used</h6><h3>{{ otp_used_count }}</h3></div>
+      <i class="fa-solid fa-key kpi-icon"></i>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card-kpi glass bg-faqs">
+      <div><h6>FAQs</h6><h3>{{ faqs_count }}</h3></div>
+      <i class="fa-solid fa-circle-question kpi-icon"></i>
+    </div>
+  </div>
 </div>
 
-<!-- ADDRESS MODAL -->
-<div class="modal fade" id="addressModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form method="post" action="/address">
-        <div class="modal-header">
-          <h5 class="modal-title">Address Issue</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" name="issue_id" id="modalIssueId">
-          <div class="mb-3">
-            <label>Topic</label>
-            <input type="text" name="topic" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label>Comment</label>
-            <textarea name="comment" class="form-control" required></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-primary" type="submit">Send</button>
-        </div>
-      </form>
-    </div>
+<!-- CHARTS -->
+<div class="row mt-4 g-3">
+  <div class="col-md-12">
+    <div class="glass"><h6>KPI Snapshots Trend</h6><canvas id="snapshotChart"></canvas></div>
   </div>
+  <div class="col-md-6">
+    <div class="glass"><h6>OTP Usage</h6><canvas id="otpChart"></canvas></div>
+  </div>
+  <div class="col-md-6">
+    <div class="glass"><h6>Task Status Breakdown</h6><canvas id="taskChart"></canvas></div>
+  </div>
+  <div class="col-md-6">
+    <div class="glass"><h6>Top Wallet Balances</h6><canvas id="walletChart"></canvas></div>
+  </div>
+  <div class="col-md-6">
+    <div class="glass"><h6>Session Status</h6><canvas id="sessionChart"></canvas></div>
+  </div>
+</div>
+
+<!-- ======================== -->
+<!-- TICKETS / ISSUES TABLE  -->
+<!-- ======================== -->
+<h5 class="section-heading mt-4"><i class="fa-solid fa-ticket me-2"></i>Tickets</h5>
+<div class="glass mt-2">
+  <table id="issuesTable" class="table table-dark table-hover w-100">
+    <thead>
+      <tr>
+        <th>Ticket ID</th>
+        <th>Phone</th>
+        <th>Issue</th>
+        <th>Priority</th>
+        <th>Category</th>
+        <th>Status</th>
+        <th>SLA</th>
+        <th>Created</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for issue in issues %}
+      <tr>
+        <td>{{ issue[1] }}</td>
+        <td>{{ issue[2] }}</td>
+        <td>{{ issue[3] }}</td>
+        <td>{{ issue[10] }}</td>
+        <td>{{ issue[11] }}</td>
+        <td>
+          <span class="badge {% if issue[5] == 'Resolved' %}bg-success{% elif issue[5] == 'Pending' %}badge-pending bg-warning text-dark{% else %}bg-secondary{% endif %}">
+            {{ issue[5] }}
+          </span>
+        </td>
+        <td>
+          <span class="badge {% if issue[13] == 'Breached' %}bg-danger{% else %}bg-success{% endif %}">
+            {{ issue[13] }}
+          </span>
+        </td>
+        <td>{{ issue[6] }}</td>
+        <td>
+          <button class="btn btn-sm btn-warning me-1"
+            data-bs-toggle="modal"
+            data-bs-target="#addressModal"
+            data-id="{{ issue[0] }}">
+            <i class="fa-solid fa-pen-to-square"></i> Edit
+          </button>
+          <button class="btn-resolve"
+            data-bs-toggle="modal"
+            data-bs-target="#resolveModal"
+            data-id="{{ issue[0] }}"
+            data-ticket="{{ issue[1] }}">
+            <i class="fa-solid fa-circle-check"></i> Resolve
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- ======================== -->
+<!-- WALLETS TABLE           -->
+<!-- ======================== -->
+<h5 class="section-heading mt-4"><i class="fa-solid fa-wallet me-2"></i>Wallets</h5>
+<div class="glass mt-2">
+  <table id="walletsTable" class="table table-dark table-hover w-100">
+    <thead>
+      <tr>
+        <th>Phone</th>
+        <th>Balance</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for w in wallets %}
+      <tr>
+        <td>{{ w[0] }}</td>
+        <td>{{ "%.2f"|format(w[1]) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- ======================== -->
+<!-- TASKS TABLE             -->
+<!-- ======================== -->
+<h5 class="section-heading mt-4"><i class="fa-solid fa-list-check me-2"></i>Tasks</h5>
+<div class="glass mt-2">
+  <table id="tasksTable" class="table table-dark table-hover w-100">
+    <thead>
+      <tr>
+        <th>Agent ID</th>
+        <th>Title</th>
+        <th>Description</th>
+        <th>Status</th>
+        <th>Due Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for task in tasks %}
+      <tr>
+        <td>{{ task[0] }}</td>
+        <td>{{ task[1] }}</td>
+        <td>{{ task[2] }}</td>
+        <td>
+          <span class="badge {% if task[3] == 'Done' %}bg-success{% elif task[3] == 'In Progress' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+            {{ task[3] }}
+          </span>
+        </td>
+        <td>{{ task[4] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- ======================== -->
+<!-- NOTIFICATIONS TABLE     -->
+<!-- ======================== -->
+<h5 class="section-heading mt-4"><i class="fa-solid fa-bell me-2"></i>Notifications</h5>
+<div class="glass mt-2">
+  <table id="notifTable" class="table table-dark table-hover w-100">
+    <thead>
+      <tr>
+        <th>Phone</th>
+        <th>Message</th>
+        <th>Status</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for n in notifications %}
+      <tr>
+        <td>{{ n[0] }}</td>
+        <td>{{ n[1] }}</td>
+        <td>
+          <span class="badge {% if n[2] == 'unread' %}bg-danger{% else %}bg-secondary{% endif %}">
+            {{ n[2] }}
+          </span>
+        </td>
+        <td>{{ n[3] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+</div><!-- /container -->
+
+<!-- ======================== -->
+<!-- EDIT ISSUE MODAL        -->
+<!-- ======================== -->
+<div class="modal fade" id="addressModal">
+<div class="modal-dialog">
+<div class="modal-content glass">
+<form method="post" action="/address">
+  <div class="modal-header">
+    <h5>Address Issue</h5>
+    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="modalIssueId" name="issue_id" />
+    <input type="text" class="form-control mb-3 bg-dark text-white border-secondary" name="topic" placeholder="Topic"/>
+    <textarea class="form-control bg-dark text-white border-secondary" name="comment" placeholder="Comment"></textarea>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-primary">Send</button>
+  </div>
+</form>
+</div>
+</div>
+</div>
+
+<!-- ======================== -->
+<!-- RESOLVE TICKET MODAL    -->
+<!-- ======================== -->
+<div class="modal fade" id="resolveModal">
+<div class="modal-dialog">
+<div class="modal-content glass">
+<form method="post" action="/resolve">
+  <div class="modal-header">
+    <h5><i class="fa-solid fa-circle-check me-2 text-success"></i>Resolve Ticket</h5>
+    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="resolveIssueId" name="issue_id" />
+    <p class="text-muted small mb-3">Ticket: <strong id="resolveTicketId" class="text-white"></strong></p>
+    <textarea class="form-control bg-dark text-white border-secondary" name="resolution_notes" rows="4" placeholder="Resolution notes..."></textarea>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-resolve px-4">
+      <i class="fa-solid fa-check me-1"></i> Mark Resolved
+    </button>
+  </div>
+</form>
+</div>
+</div>
 </div>
 
 <!-- SCRIPTS -->
@@ -209,61 +441,105 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-$(document).ready(function() {
-  // Initialize DataTable with export buttons
-  $('#issuesTable').DataTable({
-    dom: 'Bfrtip',
-    buttons: ['copy','csv','excel','pdf','print']
-  });
+/* ---- DATA FROM BACKEND ---- */
+const snapshotLabels    = {{ snapshot_labels | tojson }};
+const snapshotResolved  = {{ snapshot_resolved | tojson }};
+const snapshotPending   = {{ snapshot_pending | tojson }};
+const snapshotAvgSla    = {{ snapshot_avg_sla | tojson }};
+const otpLabels         = {{ otp_labels | tojson }};
+const otpData           = {{ otp_data | tojson }};
+const taskStatusLabels  = {{ task_status_labels | tojson }};
+const taskStatusData    = {{ task_status_data | tojson }};
+const walletLabels      = {{ wallet_labels | tojson }};
+const walletData        = {{ wallet_data | tojson }};
+const sessionLabels     = {{ session_status_labels | tojson }};
+const sessionData       = {{ session_status_data | tojson }};
 
-  // Pass issue ID to modal dynamically
-  $('#addressModal').on('show.bs.modal', function(event) {
-    const button = $(event.relatedTarget); // Button that triggered modal
-    const issueId = button.data('id');     // Extract info from data-id
-    $('#modalIssueId').val(issueId);       // Set hidden input value
-  });
+/* ---- CHARTS ---- */
+new Chart(document.getElementById('snapshotChart'), {
+  type: 'line',
+  data: {
+    labels: snapshotLabels,
+    datasets: [
+      { label: 'Resolved', data: snapshotResolved, borderColor: '#28a745', tension: 0.4, fill: false },
+      { label: 'Pending',  data: snapshotPending,  borderColor: '#ffc107', tension: 0.4, fill: false },
+      { label: 'Avg SLA',  data: snapshotAvgSla,   borderColor: '#0dcaf0', tension: 0.4, fill: false }
+    ]
+  },
+  options: { plugins: { legend: { labels: { color: '#fff' } } }, scales: { x: { ticks: { color: '#aaa' } }, y: { ticks: { color: '#aaa' } } } }
+});
 
-  // KPI Chart
-  fetch('/kpi')
-    .then(res => res.json())
-    .then(data => {
-      new Chart(document.getElementById('kpiChart'), {
-        type: 'line',
-        data: {
-          labels: data.labels,
-          datasets: [{
-            label: 'Resolved',
-            data: data.resolved,
-            borderColor: '#28a745',
-            borderWidth: 2,
-            fill: false
-          },{
-            label: 'Pending',
-            data: data.pending,
-            borderColor: '#ffc107',
-            borderWidth: 2,
-            fill: false
-          }]
-        }
-      });
-    });
+new Chart(document.getElementById('otpChart'), {
+  type: 'doughnut',
+  data: {
+    labels: otpLabels,
+    datasets: [{ data: otpData, backgroundColor: ['#28a745','#dc3545','#ffc107','#0dcaf0'] }]
+  },
+  options: { plugins: { legend: { labels: { color: '#fff' } } } }
+});
 
-  // SLA Chart (example)
-  new Chart(document.getElementById('slaChart'), {
-    type: 'bar',
-    data: {
-      labels: ['Met SLA','Breached'],
-      datasets: [{
-        label: 'SLA',
-        data: [60, 40],
-        backgroundColor: ['#28a745','#dc3545']
-      }]
-    }
-  });
+new Chart(document.getElementById('taskChart'), {
+  type: 'bar',
+  data: {
+    labels: taskStatusLabels,
+    datasets: [{ label: 'Tasks', data: taskStatusData, backgroundColor: ['#0d6efd','#28a745','#ffc107','#dc3545'] }]
+  },
+  options: { plugins: { legend: { labels: { color: '#fff' } } }, scales: { x: { ticks: { color: '#aaa' } }, y: { ticks: { color: '#aaa' } } } }
+});
+
+new Chart(document.getElementById('walletChart'), {
+  type: 'bar',
+  data: {
+    labels: walletLabels,
+    datasets: [{ label: 'Balance', data: walletData, backgroundColor: '#0dcaf0' }]
+  },
+  options: {
+    indexAxis: 'y',
+    plugins: { legend: { labels: { color: '#fff' } } },
+    scales: { x: { ticks: { color: '#aaa' } }, y: { ticks: { color: '#aaa' } } }
+  }
+});
+
+new Chart(document.getElementById('sessionChart'), {
+  type: 'pie',
+  data: {
+    labels: sessionLabels,
+    datasets: [{ data: sessionData, backgroundColor: ['#0d6efd','#28a745','#dc3545','#ffc107'] }]
+  },
+  options: { plugins: { legend: { labels: { color: '#fff' } } } }
+});
+
+/* ---- DATATABLES ---- */
+const dtOptions = {
+  dom: "<'row mb-3'<'col-md-6'B><'col-md-6 text-end'f>>" +
+       "<'row'<'col-12'tr>>" +
+       "<'row mt-2'<'col-md-5'i><'col-md-7'p>>",
+  buttons: ['copy','csv','excel','pdf','print'],
+  pageLength: 5
+};
+
+['#issuesTable','#walletsTable','#tasksTable','#notifTable'].forEach(id => {
+  $(id).DataTable(dtOptions);
+});
+
+/* ---- MODALS ---- */
+$("#addressModal").on("show.bs.modal", function(e) {
+  $("#modalIssueId").val($(e.relatedTarget).data("id"));
+});
+
+$("#resolveModal").on("show.bs.modal", function(e) {
+  const btn = $(e.relatedTarget);
+  $("#resolveIssueId").val(btn.data("id"));
+  $("#resolveTicketId").text(btn.data("ticket"));
+});
+
+/* ---- PARTICLES ---- */
+particlesJS("particles-js", {
+  particles: { number: { value: 60 }, size: { value: 3 }, color: { value: "#0d6efd" }, move: { speed: 1 } }
 });
 </script>
 
