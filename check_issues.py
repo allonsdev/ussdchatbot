@@ -12,120 +12,143 @@ TEXT = {
         "nd": "Siyakwamukela",
         "sn": "Tinokugamuchirai"
     },
+
     "main_menu": {
         "en": "1. Wallet\n2. Support\n3. FAQ\n4. Account",
-        "nd": "1. I-Wallet\n2. Usizo\n3. FAQ\n4. I-Akhawunti",
-        "sn": "1. Wallet\n2. Rubatsiro\n3. FAQ\n4. Account"
+        "nd": "1. Isikhwama\n2. Usizo\n3. FAQ\n4. I-Akhawunti",
+        "sn": "1. Chikwama\n2. Rubatsiro\n3. FAQ\n4. Homwe"
     },
+
     "wallet": {
         "en": "1. Balance\n2. Send Money\n3. Mini Statement",
-        "nd": "1. Ibhalansi\n2. Thumela Imali\n3. Umlando",
-        "sn": "1. Balance\n2. Tumira Mari\n3. Nhoroondo"
+        "nd": "1. Ibhalansi\n2. Thumela Imali\n3. Umlando Omfushane",
+        "sn": "1. Mari iripo\n2. Tumira Mari\n3. Nhoroondo Pfupi"
     },
+
     "support": {
-        "en": "1. Create Ticket\n2. Track Ticket\n3. Callback",
-        "nd": "1. Dala Ithikithi\n2. Landelela\n3. Call back",
-        "sn": "1. Gadzira Ticket\n2. Tarisa\n3. Callback"
+        "en": "1. Create Ticket\n2. Track Ticket\n3. Request Callback",
+        "nd": "1. Dala Ithikithi\n2. Landela Ithikithi\n3. Cela Ukubizwa",
+        "sn": "1. Gadzira Tiketi\n2. Tevera Tiketi\n3. Kumbira Kufonerwa"
     },
+
     "balance": {
         "en": "Your balance is",
-        "nd": "Imali yakho ngu",
-        "sn": "Mari yako i"
+        "nd": "Ibhalansi yakho ngu",
+        "sn": "Mari yako iri"
     },
+
     "insufficient": {
         "en": "Insufficient balance",
         "nd": "Imali ayanele",
         "sn": "Mari haina kukwana"
     },
+
     "sent": {
-        "en": "Sent",
-        "nd": "Kuthunyelwe",
-        "sn": "Watumira"
+        "en": "Money sent",
+        "nd": "Imali ithunyelwe",
+        "sn": "Mari yatumirwa"
     },
+
     "enter_recipient": {
-        "en": "Enter recipient",
-        "nd": "Faka umamukeli",
-        "sn": "Isa anogamuchira"
+        "en": "Enter recipient number",
+        "nd": "Faka inombolo yomamukeli",
+        "sn": "Isa nhamba yemunhu"
     },
+
     "enter_amount": {
         "en": "Enter amount",
-        "nd": "Faka inani",
-        "sn": "Isa huwandu"
+        "nd": "Faka inani lemali",
+        "sn": "Isa huwandu hwemari"
     },
+
     "invalid": {
         "en": "Invalid input",
         "nd": "Okungavumelekile",
         "sn": "Zvisiri izvo"
     },
+
     "ticket_created": {
-        "en": "Ticket created",
-        "nd": "Ithikithi lidaliwe",
-        "sn": "Ticket yagadzirwa"
+        "en": "Ticket created successfully",
+        "nd": "Ithikithi lidaliwe ngempumelelo",
+        "sn": "Tiketi ragadzirwa zvakanaka"
     },
+
     "enter_issue": {
-        "en": "Describe issue",
-        "nd": "Chaza inkinga",
-        "sn": "Tsanangura dambudziko"
+        "en": "Describe your issue",
+        "nd": "Chaza inkinga yakho",
+        "sn": "Tsanangura dambudziko rako"
     },
+
     "enter_ticket": {
         "en": "Enter ticket ID",
-        "nd": "Faka i-ID",
-        "sn": "Isa ticket ID"
+        "nd": "Faka i-ID yethikithi",
+        "sn": "Isa ID yetiketi"
     },
+
     "callback": {
         "en": "Callback requested",
-        "nd": "I-call back iceliwe",
-        "sn": "Callback yakumbirwa"
+        "nd": "Ukubizwa sekuceliwe",
+        "sn": "Kufonerwa kwakumbirwa"
     },
+
     "otp_sent": {
-        "en": "OTP sent",
-        "nd": "OTP ithunyelwe",
-        "sn": "OTP yatumirwa"
+        "en": "OTP sent successfully",
+        "nd": "OTP ithunyelwe ngempumelelo",
+        "sn": "OTP yatumirwa zvakanaka"
     },
+
     "otp_invalid": {
         "en": "Invalid OTP",
         "nd": "OTP ayilungile",
         "sn": "OTP haina kunaka"
     },
+
     "pin_updated": {
-        "en": "PIN updated",
-        "nd": "PIN iguquliwe",
-        "sn": "PIN yashandurwa"
+        "en": "PIN updated successfully",
+        "nd": "I-PIN iguqulwe ngempumelelo",
+        "sn": "PIN yashandurwa zvakanaka"
     },
-     "enter_phone": {
+
+    "enter_phone": {
         "en": "Enter phone number:",
         "nd": "Faka inombolo yocingo:",
         "sn": "Isa nhamba yefoni:"
     },
+
     "select_option": {
         "en": "Select option:\n1. Enter PIN\n2. Use OTP",
-        "nd": "Khetha inketho:\n1. Faka i-PIN\n2. Sebenzisa OTP",
+        "nd": "Khetha inketho:\n1. Faka i-PIN\n2. Sebenzisa i-OTP",
         "sn": "Sarudza:\n1. Isa PIN\n2. Shandisa OTP"
     },
+
     "enter_pin": {
         "en": "Enter your PIN",
         "nd": "Faka i-PIN yakho",
         "sn": "Isa PIN yako"
     },
+
     "enter_otp": {
         "en": "Enter OTP",
         "nd": "Faka i-OTP",
         "sn": "Isa OTP"
     },
+
     "invalid_pin": {
         "en": "Invalid PIN",
         "nd": "I-PIN ayilungile",
         "sn": "PIN haina kunaka"
     },
+
     "invalid_choice": {
         "en": "Invalid choice",
         "nd": "Ukhetho alulungile",
         "sn": "Sarudzo haina kunaka"
     },
+
     "session_error": {
-        "en": "Session error",
-        "nd": "Iphutha leseshini",
-        "sn": "Session error"
+        "en": "Session error. Please try again.",
+        "nd": "Iphutha leseshini. Zama futhi.",
+        "sn": "Session yakanganisika. Edzazve."
     }
 }
 
