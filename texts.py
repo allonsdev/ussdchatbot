@@ -13,6 +13,34 @@ LANGUAGES = {
     "3": "sn",   # Shona
 }
 
+# ---------------------------------------------------------------------------
+# Hardcoded FAQs in all three languages (no database needed)
+# ---------------------------------------------------------------------------
+FAQS = {
+    "en": [
+        {"id": 1, "question": "How do I check my balance?",        "answer": "Go to Wallet > Balance."},
+        {"id": 2, "question": "How do I send money?",              "answer": "Go to Wallet > Send Money, enter the recipient and amount."},
+        {"id": 3, "question": "How do I reset my PIN?",            "answer": "Go to Account > Change PIN and follow the prompts."},
+        {"id": 4, "question": "What do I do if my OTP expires?",   "answer": "Go to Account > Request OTP to get a new one."},
+        {"id": 5, "question": "How do I contact support?",         "answer": "Go to Support > Create Ticket or Request Callback."},
+    ],
+    "nd": [
+        {"id": 1, "question": "Ngiyihlola kanjani ibhalansi yami?",         "answer": "Yiya ku I-Wallet > Ibhalansi."},
+        {"id": 2, "question": "Ngithumela kanjani imali?",                  "answer": "Yiya ku I-Wallet > Thumela Imali, faka inombolo nomamukeli nenani."},
+        {"id": 3, "question": "Ngishintsha kanjani i-PIN yami?",            "answer": "Yiya ku I-Akhawunti > Shintsha i-PIN ulandele imiyalelo."},
+        {"id": 4, "question": "Ngenzeni uma i-OTP yami iphelelwe isikhathi?", "answer": "Yiya ku I-Akhawunti > Cela i-OTP ukuthola entsha."},
+        {"id": 5, "question": "Ngithintana kanjani nabo usizo?",            "answer": "Yiya ku Usizo > Dala Ithikithi noma Cela Ukubizwa."},
+    ],
+    "sn": [
+        {"id": 1, "question": "Ndinoona sei mari iripo?",                   "answer": "Enda kuWallet > Balance."},
+        {"id": 2, "question": "Ndinotumira sei mari?",                      "answer": "Enda kuWallet > Tumira Mari, isa nhamba yeanogamuchira nehuwandu."},
+        {"id": 3, "question": "Ndinochinja sei PIN yangu?",                 "answer": "Enda kuAccount > Chinja PIN utevedze mirayiro."},
+        {"id": 4, "question": "Ndinoitei kana OTP yangu yaguma nguva?",    "answer": "Enda kuAccount > Kumbira OTP kuti uwane imwe."},
+        {"id": 5, "question": "Ndinosvika sei rubatsiro?",                  "answer": "Enda kuRubatsiro > Gadzira Ticket kana Kumbira Callback."},
+    ],
+}
+
+
 TEXT: dict[str, dict[str, str]] = {
 
     # ── Auth / Login ───────────────────────────────────────────────────────
@@ -41,18 +69,18 @@ TEXT: dict[str, dict[str, str]] = {
         "nd": "Ngena nge:\n1. PIN\n2. OTP",
         "sn": "Pinda ne:\n1. PIN\n2. OTP",
     },
-    # ── OTP sub-menu (shown when user picks OTP at login) ─────────────────
+    # ── OTP sub-menu ──────────────────────────────────────────────────────
     "select_otp_action": {
         "en": "OTP Options:\n1. Enter OTP\n2. Request call me back",
-        "nd": "Izinketho ze-OTP:\n1. Faka i-OTP\n2. Thumela imenyu nge-SMS",
-        "sn": "Sarudzo dzeOTP:\n1. Isa OTP\n2. Tumira menyu ne-SMS",
+        "nd": "Izinketho ze-OTP:\n1. Faka i-OTP\n2. Cela ukubizwa",
+        "sn": "Sarudzo dzeOTP:\n1. Isa OTP\n2. Kumbira kufonerwa",
     },
     "menu_sent_via_sms": {
-        "en": "Call me back sent.",
-        "nd": "Imenyu ithunyelwe ocingweni lwakho nge-SMS. Bheka imilayezo yakho.",
-        "sn": "Menyu yatumirwa kufoni yako ne-SMS. Tarisa meseji yako.",
+        "en": "Call me back request sent.",
+        "nd": "Isicelo sokubizwa sithunyelwe.",
+        "sn": "Chikumbiro chekufonerwa chatumirwa.",
     },
-    # ──────────────────────────────────────────────────────────────────────
+    # ─────────────────────────────────────────────────────────────────────
     "enter_pin": {
         "en": "Enter your PIN:",
         "nd": "Faka i-PIN yakho:",
@@ -60,8 +88,8 @@ TEXT: dict[str, dict[str, str]] = {
     },
     "enter_otp": {
         "en": "Enter the OTP sent to your phone:",
-        "nd": "Faka i-OTP ethunyelwe:",
-        "sn": "Isa OTP yatumirwa kufoni:",
+        "nd": "Faka i-OTP ethunyelwe ocingweni lwakho:",
+        "sn": "Isa OTP yatumirwa kufoni yako:",
     },
     "invalid_pin": {
         "en": "Invalid PIN. Try again:",
@@ -70,8 +98,8 @@ TEXT: dict[str, dict[str, str]] = {
     },
     "invalid_otp": {
         "en": "Invalid or expired OTP. Try again:",
-        "nd": "OTP ayilungile noma iphelelwe isikhathi:",
-        "sn": "OTP haina kunaka kana yaguma nguva:",
+        "nd": "OTP ayilungile noma iphelelwe isikhathi. Zama futhi:",
+        "sn": "OTP haina kunaka kana yaguma nguva. Edza zvakare:",
     },
     "otp_sent": {
         "en": "OTP sent to your phone.",
@@ -79,14 +107,14 @@ TEXT: dict[str, dict[str, str]] = {
         "sn": "OTP yatumirwa kufoni yako.",
     },
 
-    # ── Language selection ─────────────────────────────────────────────────
+    # ── Language selection ────────────────────────────────────────────────
     "choose_language": {
         "en": "Choose Language:\n1. English\n2. Ndebele\n3. Shona",
         "nd": "Khetha Ulimi:\n1. English\n2. Ndebele\n3. Shona",
         "sn": "Sarudza Mutauro:\n1. English\n2. Ndebele\n3. Shona",
     },
 
-    # ── Main menu ──────────────────────────────────────────────────────────
+    # ── Main menu ─────────────────────────────────────────────────────────
     "welcome": {
         "en": "Welcome",
         "nd": "Siyakwamukela",
@@ -98,7 +126,7 @@ TEXT: dict[str, dict[str, str]] = {
         "sn": "Menyu Huru:\n1. Wallet\n2. Rubatsiro\n3. FAQ\n4. Account",
     },
 
-    # ── Wallet ─────────────────────────────────────────────────────────────
+    # ── Wallet ────────────────────────────────────────────────────────────
     "wallet_menu": {
         "en": "Wallet:\n1. Balance\n2. Send Money\n3. Mini Statement",
         "nd": "I-Wallet:\n1. Ibhalansi\n2. Thumela Imali\n3. Umlando",
@@ -106,8 +134,8 @@ TEXT: dict[str, dict[str, str]] = {
     },
     "balance": {
         "en": "Your balance is",
-        "nd": "Imali yakho ngu",
-        "sn": "Mari yako i",
+        "nd": "Ibhalansi yakho ngu",
+        "sn": "Mari yako iri",
     },
     "enter_recipient": {
         "en": "Enter recipient phone number:",
@@ -116,8 +144,8 @@ TEXT: dict[str, dict[str, str]] = {
     },
     "enter_amount": {
         "en": "Enter amount to send:",
-        "nd": "Faka inani elizotshalwa:",
-        "sn": "Isa huwandu yekutumira:",
+        "nd": "Faka inani lemali elizothunywa:",
+        "sn": "Isa huwandu hwemari yekutumira:",
     },
     "confirm_send": {
         "en": "Send {amount} to {recipient}?\n1. Confirm\n2. Cancel",
@@ -127,7 +155,7 @@ TEXT: dict[str, dict[str, str]] = {
     "sent": {
         "en": "Successfully sent {amount} to {recipient}.",
         "nd": "Kuthunyelwe {amount} ku {recipient}.",
-        "sn": "Watumira {amount} ku {recipient}.",
+        "sn": "Watumira {amount} ku {recipient} zvakanaka.",
     },
     "insufficient": {
         "en": "Insufficient balance. Transaction cancelled.",
@@ -145,11 +173,11 @@ TEXT: dict[str, dict[str, str]] = {
         "sn": "Hapana zvakaitwa.",
     },
 
-    # ── Support ────────────────────────────────────────────────────────────
+    # ── Support ───────────────────────────────────────────────────────────
     "support_menu": {
         "en": "Support:\n1. Create Ticket\n2. Track Ticket\n3. Request Callback",
-        "nd": "Usizo:\n1. Dala Ithikithi\n2. Landelela\n3. Cela Ukubizwa",
-        "sn": "Rubatsiro:\n1. Gadzira Ticket\n2. Tarisa Ticket\n3. Kumbira Callback",
+        "nd": "Usizo:\n1. Dala Ithikithi\n2. Landelela Ithikithi\n3. Cela Ukubizwa",
+        "sn": "Rubatsiro:\n1. Gadzira Tiketi\n2. Tevera Tiketi\n3. Kumbira Kufonerwa",
     },
     "enter_issue": {
         "en": "Describe your issue:",
@@ -159,30 +187,30 @@ TEXT: dict[str, dict[str, str]] = {
     "ticket_created": {
         "en": "Ticket created. Your ID: {tid}",
         "nd": "Ithikithi lidaliwe. I-ID yakho: {tid}",
-        "sn": "Ticket yagadzirwa. ID yako: {tid}",
+        "sn": "Tiketi ragadzirwa. ID yako: {tid}",
     },
     "enter_ticket_id": {
         "en": "Enter your ticket ID:",
         "nd": "Faka i-ID yethikithi:",
-        "sn": "Isa ticket ID yako:",
+        "sn": "Isa ID yetiketi yako:",
     },
     "ticket_status": {
         "en": "Ticket {tid} status: {status}",
         "nd": "Isimo sethikithi {tid}: {status}",
-        "sn": "Mamiriro eticket {tid}: {status}",
+        "sn": "Mamiriro etiketi {tid}: {status}",
     },
     "ticket_not_found": {
         "en": "Ticket not found.",
         "nd": "Ithikithi alitholakali.",
-        "sn": "Ticket haisi kuwanikwa.",
+        "sn": "Tiketi haisi kuwanikwa.",
     },
     "callback_requested": {
         "en": "Callback requested. We will call you shortly.",
-        "nd": "I-call back iceliwe. Sizobuya sikubize.",
-        "sn": "Callback yakumbirwa. Tichadana newe munguva pfupi.",
+        "nd": "Isicelo sokubizwa samukelwe. Sizobuya sikubize.",
+        "sn": "Chikumbiro chekufonerwa chagamuchirwa. Tichadana newe munguva pfupi.",
     },
 
-    # ── Account ────────────────────────────────────────────────────────────
+    # ── Account ───────────────────────────────────────────────────────────
     "account_menu": {
         "en": "Account:\n1. Change PIN\n2. Request OTP\n3. Verify OTP",
         "nd": "I-Akhawunti:\n1. Shintsha i-PIN\n2. Cela i-OTP\n3. Qinisekisa i-OTP",
@@ -204,14 +232,19 @@ TEXT: dict[str, dict[str, str]] = {
         "sn": "OTP yasimbiswa zvakanaka.",
     },
 
-    # ── FAQ ────────────────────────────────────────────────────────────────
+    # ── FAQ ───────────────────────────────────────────────────────────────
     "faq_menu": {
-        "en": "FAQs (select a number to read):",
-        "nd": "Imibuzo Evame Ukubuzwa:",
-        "sn": "Mibvunzo Inowanzoburwa:",
+        "en": "FAQs – select a number to read:",
+        "nd": "Imibuzo Evame Ukubuzwa – khetha inombolo ukufunda:",
+        "sn": "Mibvunzo Inowanzoburwa – sarudza nhamba kuverenga:",
+    },
+    "faq_not_found": {
+        "en": "FAQ not found.",
+        "nd": "Umbuzo awutholakali.",
+        "sn": "Mubvunzo hauwanikwi.",
     },
 
-    # ── Generic ────────────────────────────────────────────────────────────
+    # ── Generic ───────────────────────────────────────────────────────────
     "invalid_input": {
         "en": "Invalid input. Please try again.",
         "nd": "Okungavumelekile. Zama futhi.",
@@ -225,11 +258,11 @@ TEXT: dict[str, dict[str, str]] = {
     "session_error": {
         "en": "Session error. Please dial again.",
         "nd": "Iphutha leseshini. Zama futhi.",
-        "sn": "Session error. Edza zvakare.",
+        "sn": "Session yakanganisika. Edza zvakare.",
     },
     "cancelled": {
         "en": "Cancelled.",
-        "nd": "Khukhanyiwe.",
+        "nd": "Kukhanselwe.",
         "sn": "Yakanzurwa.",
     },
     "goodbye": {
@@ -246,8 +279,8 @@ def t(key: str, lang: str = "en", **kwargs) -> str:
     Supports Python str.format() placeholders via **kwargs.
 
     Example:
-        t("sent", "en", amount="5.00", recipient="0771234567")
-        → "Successfully sent 5.00 to 0771234567."
+        t("sent", "sn", amount="5.00", recipient="0771234567")
+        → "Watumira 5.00 ku 0771234567 zvakanaka."
     """
     bucket = TEXT.get(key, {})
     text = bucket.get(lang) or bucket.get("en") or key
@@ -257,3 +290,8 @@ def t(key: str, lang: str = "en", **kwargs) -> str:
         except KeyError:
             pass  # return unformatted rather than crash
     return text
+
+
+def get_faqs(lang: str = "en") -> list:
+    """Return the FAQ list for the given language, falling back to English."""
+    return FAQS.get(lang) or FAQS["en"]

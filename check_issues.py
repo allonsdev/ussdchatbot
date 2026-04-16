@@ -16,7 +16,7 @@ TEXT = {
     "main_menu": {
         "en": "1. Wallet\n2. Support\n3. FAQ\n4. Account",
         "nd": "1. Isikhwama\n2. Usizo\n3. FAQ\n4. I-Akhawunti",
-        "sn": "1. Chikwama\n2. Rubatsiro\n3. FAQ\n4. Homwe"
+        "sn": "1. Chikwama\n2. Rubatsiro\n3. FAQ\n4. Homw"
     },
 
     "wallet": {

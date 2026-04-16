@@ -693,53 +693,56 @@ def state_support_callback(session: dict, user_input: str) -> str:
 # FAQ
 # ---------------------------------------------------------------------------
 
+from texts import t, get_faqs
+ 
+ 
 def state_faq_list(session: dict, user_input: str) -> str:
-    sid = session["session_id"]
+    """
+    Show the FAQ list in the user's chosen language.
+    On first entry user_input is empty; on second entry it holds their choice.
+    """
+    sid  = session["session_id"]
     lang = session["lang"]
-
-    conn = get_db()
-    faqs = conn.execute("SELECT id, question, answer FROM faqs").fetchall()
-    conn.close()
-
+    faqs = get_faqs(lang)           # ← fully localised, no DB
+ 
+    # First visit: display the menu and wait for a selection
     if not user_input:
         lines = [t("faq_menu", lang)]
-        for f in faqs:
-            lines.append(f"{f['id']}. {f['question']}")
+        for faq in faqs:
+            lines.append(f"{faq['id']}. {faq['question']}")
         update_session(sid, state="FAQ_ANSWER")
         return con("\n".join(lines))
-
+ 
+    # The user typed their answer on the same dial-through
     return _show_faq_answer(session, user_input, faqs)
-
-
+ 
+ 
 def state_faq_answer(session: dict, user_input: str) -> str:
-    sid = session["session_id"]
+    """Called when the user replies to the FAQ list screen."""
     lang = session["lang"]
-
-    conn = get_db()
-    faqs = conn.execute("SELECT id, question, answer FROM faqs").fetchall()
-    conn.close()
-
+    faqs = get_faqs(lang)
     return _show_faq_answer(session, user_input, faqs)
-
-
-def _show_faq_answer(session: dict, user_input: str, faqs) -> str:
-    sid = session["session_id"]
+ 
+ 
+def _show_faq_answer(session: dict, user_input: str, faqs: list) -> str:
+    """Display the answer for the selected FAQ number, all in session lang."""
+    sid  = session["session_id"]
     lang = session["lang"]
-
+ 
     try:
         faq_id = int(user_input)
-    except ValueError:
+    except (ValueError, TypeError):
         update_session(sid, state="MAIN_MENU")
         return end(t("invalid_input", lang))
-
-    for f in faqs:
-        if f["id"] == faq_id:
+ 
+    for faq in faqs:
+        if faq["id"] == faq_id:
             update_session(sid, state="MAIN_MENU")
-            return end(f"Q: {f['question']}\nA: {f['answer']}")
-
+            return end(f"{faq['question']}\n{faq['answer']}")
+ 
     update_session(sid, state="MAIN_MENU")
-    return end(t("invalid_choice", lang))
-
+    return end(t("faq_not_found", lang))
+ 
 
 # ---------------------------------------------------------------------------
 # Account
