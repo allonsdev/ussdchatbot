@@ -25,18 +25,18 @@ FAQS = {
         {"id": 5, "question": "How do I contact support?",         "answer": "Go to Support > Create Ticket or Request Callback."},
     ],
     "nd": [
-        {"id": 1, "question": "Ngiyihlola kanjani ibhalansi yami?",         "answer": "Yiya ku I-Wallet > Ibhalansi."},
-        {"id": 2, "question": "Ngithumela kanjani imali?",                  "answer": "Yiya ku I-Wallet > Thumela Imali, faka inombolo nomamukeli nenani."},
-        {"id": 3, "question": "Ngishintsha kanjani i-PIN yami?",            "answer": "Yiya ku I-Akhawunti > Shintsha i-PIN ulandele imiyalelo."},
-        {"id": 4, "question": "Ngenzeni uma i-OTP yami iphelelwe isikhathi?", "answer": "Yiya ku I-Akhawunti > Cela i-OTP ukuthola entsha."},
-        {"id": 5, "question": "Ngithintana kanjani nabo usizo?",            "answer": "Yiya ku Usizo > Dala Ithikithi noma Cela Ukubizwa."},
+        {"id": 1, "question": "Ngiyihlola kanjani ibhalansi yami?",           "answer": "Yiya ku Isikhwama > Ibhalansi."},
+        {"id": 2, "question": "Ngithumela kanjani imali?",                    "answer": "Yiya ku Isikhwama > Thumela Imali, faka inombolo nomamukeli nenani."},
+        {"id": 3, "question": "Ngishintsha kanjani inombolo yemfihlo yami?",  "answer": "Yiya ku I-Akhawunti > Shintsha Inombolo Yemfihlo ulandele imiyalelo."},
+        {"id": 4, "question": "Ngenzeni uma inombolo yesikhathi sami iphelelwe?", "answer": "Yiya ku I-Akhawunti > Cela Inombolo Yesikhathi ukuthola entsha."},
+        {"id": 5, "question": "Ngithintana kanjani nabo usizo?",              "answer": "Yiya ku Usizo > Dala Ithikithi noma Cela Ukubizwa."},
     ],
     "sn": [
-        {"id": 1, "question": "Ndinoona sei mari iripo?",                   "answer": "Enda kuWallet > Balance."},
-        {"id": 2, "question": "Ndinotumira sei mari?",                      "answer": "Enda kuWallet > Tumira Mari, isa nhamba yeanogamuchira nehuwandu."},
-        {"id": 3, "question": "Ndinochinja sei PIN yangu?",                 "answer": "Enda kuAccount > Chinja PIN utevedze mirayiro."},
-        {"id": 4, "question": "Ndinoitei kana OTP yangu yaguma nguva?",    "answer": "Enda kuAccount > Kumbira OTP kuti uwane imwe."},
-        {"id": 5, "question": "Ndinosvika sei rubatsiro?",                  "answer": "Enda kuRubatsiro > Gadzira Ticket kana Kumbira Callback."},
+        {"id": 1, "question": "Ndinoona sei mari iripo?",                     "answer": "Enda kuSigaba Semari > Mari Iripo."},
+        {"id": 2, "question": "Ndinotumira sei mari?",                        "answer": "Enda kuSigaba Semari > Tumira Mari, isa nhamba yeanogamuchira nehuwandu."},
+        {"id": 3, "question": "Ndinochinja sei nhamba yangu yechinyel'ano?",  "answer": "Enda kuHesapu > Chinja Nhamba Yechinyel'ano utevedze mirayiro."},
+        {"id": 4, "question": "Ndinoitei kana nhamba yangu yenguva yaguma?",  "answer": "Enda kuHesapu > Kumbira Nhamba Yenguva kuti uwane imwe."},
+        {"id": 5, "question": "Ndinosvika sei rubatsiro?",                    "answer": "Enda kuRubatsiro > Gadzira Tiketi kana Kumbira Kufonerwa."},
     ],
 }
 
@@ -47,33 +47,33 @@ TEXT: dict[str, dict[str, str]] = {
     "enter_phone": {
         "en": "Enter your phone or account number:",
         "nd": "Faka inombolo yocingo noma ye-akhawunti:",
-        "sn": "Isa nhamba yefoni kana ye-account:",
+        "sn": "Isa nhamba yefoni kana yehesapu:",
     },
     "select_id_type": {
         "en": "Identify yourself via:\n1. Phone number\n2. Account number",
         "nd": "Ziveze nge:\n1. Inombolo yocingo\n2. Inombolo ye-akhawunti",
-        "sn": "Zivonese ne:\n1. Nhamba yefoni\n2. Nhamba ye-account",
+        "sn": "Zivonese ne:\n1. Nhamba yefoni\n2. Nhamba yehesapu",
     },
     "enter_account": {
         "en": "Enter your account number:",
         "nd": "Faka inombolo ye-akhawunti yakho:",
-        "sn": "Isa nhamba ye-account yako:",
+        "sn": "Isa nhamba yehesapu yako:",
     },
     "account_not_found": {
         "en": "Account not found. Please try again:",
         "nd": "I-akhawunti ayitholakali. Zama futhi:",
-        "sn": "Account haisi kuwanikwa. Edza zvakare:",
+        "sn": "Hesapu haisi kuwanikwa. Edza zvakare:",
     },
     "select_auth": {
         "en": "Login via:\n1. PIN\n2. OTP",
-        "nd": "Ngena nge:\n1. PIN\n2. OTP",
-        "sn": "Pinda ne:\n1. PIN\n2. OTP",
+        "nd": "Ngena nge:\n1. Inombolo Yemfihlo\n2. Inombolo Yesikhathi",
+        "sn": "Pinda ne:\n1. Nhamba Yechinyel'ano\n2. Nhamba Yenguva",
     },
     # ── OTP sub-menu ──────────────────────────────────────────────────────
     "select_otp_action": {
         "en": "OTP Options:\n1. Enter OTP\n2. Request call me back",
-        "nd": "Izinketho ze-OTP:\n1. Faka i-OTP\n2. Cela ukubizwa",
-        "sn": "Sarudzo dzeOTP:\n1. Isa OTP\n2. Kumbira kufonerwa",
+        "nd": "Izinketho Zenombolo Yesikhathi:\n1. Faka Inombolo Yesikhathi\n2. Cela ukubizwa",
+        "sn": "Sarudzo dzeNhamba Yenguva:\n1. Isa Nhamba Yenguva\n2. Kumbira kufonerwa",
     },
     "menu_sent_via_sms": {
         "en": "Call me back request sent.",
@@ -83,35 +83,35 @@ TEXT: dict[str, dict[str, str]] = {
     # ─────────────────────────────────────────────────────────────────────
     "enter_pin": {
         "en": "Enter your PIN:",
-        "nd": "Faka i-PIN yakho:",
-        "sn": "Isa PIN yako:",
+        "nd": "Faka Inombolo Yakho Yemfihlo:",
+        "sn": "Isa Nhamba Yako Yechinyel'ano:",
     },
     "enter_otp": {
         "en": "Enter the OTP sent to your phone:",
-        "nd": "Faka i-OTP ethunyelwe ocingweni lwakho:",
-        "sn": "Isa OTP yatumirwa kufoni yako:",
+        "nd": "Faka Inombolo Yesikhathi ethunyelwe ocingweni lwakho:",
+        "sn": "Isa Nhamba Yenguva yatumirwa kufoni yako:",
     },
     "invalid_pin": {
         "en": "Invalid PIN. Try again:",
-        "nd": "I-PIN ayilungile. Zama futhi:",
-        "sn": "PIN haina kunaka. Edza zvakare:",
+        "nd": "Inombolo Yemfihlo ayilungile. Zama futhi:",
+        "sn": "Nhamba Yechinyel'ano haina kunaka. Edza zvakare:",
     },
     "invalid_otp": {
         "en": "Invalid or expired OTP. Try again:",
-        "nd": "OTP ayilungile noma iphelelwe isikhathi. Zama futhi:",
-        "sn": "OTP haina kunaka kana yaguma nguva. Edza zvakare:",
+        "nd": "Inombolo Yesikhathi ayilungile noma iphelelwe. Zama futhi:",
+        "sn": "Nhamba Yenguva haina kunaka kana yaguma. Edza zvakare:",
     },
     "otp_sent": {
         "en": "OTP sent to your phone.",
-        "nd": "OTP ithunyelwe ocingweni lwakho.",
-        "sn": "OTP yatumirwa kufoni yako.",
+        "nd": "Inombolo Yesikhathi ithunyelwe ocingweni lwakho.",
+        "sn": "Nhamba Yenguva yatumirwa kufoni yako.",
     },
 
     # ── Language selection ────────────────────────────────────────────────
     "choose_language": {
         "en": "Choose Language:\n1. English\n2. Ndebele\n3. Shona",
-        "nd": "Khetha Ulimi:\n1. English\n2. Ndebele\n3. Shona",
-        "sn": "Sarudza Mutauro:\n1. English\n2. Ndebele\n3. Shona",
+        "nd": "Khetha Ulimi:\n1. IsiNgisi\n2. IsiNdebele\n3. IsiShona",
+        "sn": "Sarudza Mutauro:\n1. Chirungu\n2. Sindebele\n3. Chishona",
     },
 
     # ── Main menu ─────────────────────────────────────────────────────────
@@ -122,15 +122,15 @@ TEXT: dict[str, dict[str, str]] = {
     },
     "main_menu": {
         "en": "Main Menu:\n1. Wallet\n2. Support\n3. FAQ\n4. Account",
-        "nd": "Menyu Enkulu:\n1. I-Wallet\n2. Usizo\n3. FAQ\n4. I-Akhawunti",
-        "sn": "Menyu Huru:\n1. Wallet\n2. Rubatsiro\n3. FAQ\n4. Account",
+        "nd": "Menyu Enkulu:\n1. Isikhwama\n2. Usizo\n3. Imibuzo Evamile\n4. I-Akhawunti",
+        "sn": "Menyu Huru:\n1. Sigaba Semari\n2. Rubatsiro\n3. Mibvunzo Inowanzo\n4. Hesapu",
     },
 
     # ── Wallet ────────────────────────────────────────────────────────────
     "wallet_menu": {
         "en": "Wallet:\n1. Balance\n2. Send Money\n3. Mini Statement",
-        "nd": "I-Wallet:\n1. Ibhalansi\n2. Thumela Imali\n3. Umlando",
-        "sn": "Wallet:\n1. Balance\n2. Tumira Mari\n3. Nhoroondo",
+        "nd": "Isikhwama:\n1. Ibhalansi\n2. Thumela Imali\n3. Umlando Omfishane",
+        "sn": "Sigaba Semari:\n1. Mari Iripo\n2. Tumira Mari\n3. Nhoroondo Pfupi",
     },
     "balance": {
         "en": "Your balance is",
@@ -186,13 +186,13 @@ TEXT: dict[str, dict[str, str]] = {
     },
     "ticket_created": {
         "en": "Ticket created. Your ID: {tid}",
-        "nd": "Ithikithi lidaliwe. I-ID yakho: {tid}",
-        "sn": "Tiketi ragadzirwa. ID yako: {tid}",
+        "nd": "Ithikithi lidaliwe. Inombolo yakho: {tid}",
+        "sn": "Tiketi ragadzirwa. Nhamba yako: {tid}",
     },
     "enter_ticket_id": {
         "en": "Enter your ticket ID:",
-        "nd": "Faka i-ID yethikithi:",
-        "sn": "Isa ID yetiketi yako:",
+        "nd": "Faka inombolo yethikithi:",
+        "sn": "Isa nhamba yetiketi yako:",
     },
     "ticket_status": {
         "en": "Ticket {tid} status: {status}",
@@ -213,30 +213,30 @@ TEXT: dict[str, dict[str, str]] = {
     # ── Account ───────────────────────────────────────────────────────────
     "account_menu": {
         "en": "Account:\n1. Change PIN\n2. Request OTP\n3. Verify OTP",
-        "nd": "I-Akhawunti:\n1. Shintsha i-PIN\n2. Cela i-OTP\n3. Qinisekisa i-OTP",
-        "sn": "Account:\n1. Chinja PIN\n2. Kumbira OTP\n3. Simbisa OTP",
+        "nd": "I-Akhawunti:\n1. Shintsha Inombolo Yemfihlo\n2. Cela Inombolo Yesikhathi\n3. Qinisekisa Inombolo Yesikhathi",
+        "sn": "Hesapu:\n1. Chinja Nhamba Yechinyel'ano\n2. Kumbira Nhamba Yenguva\n3. Simbisa Nhamba Yenguva",
     },
     "enter_new_pin": {
         "en": "Enter new PIN (4 digits):",
-        "nd": "Faka i-PIN entsha (izinhlamvu ezi-4):",
-        "sn": "Isa PIN nyowani (nhamba 4):",
+        "nd": "Faka Inombolo Entsha Yemfihlo (izinhlamvu ezi-4):",
+        "sn": "Isa Nhamba Nyowani Yechinyel'ano (nhamba 4):",
     },
     "pin_updated": {
         "en": "PIN updated successfully.",
-        "nd": "I-PIN iguquliwe ngempumelelo.",
-        "sn": "PIN yashandurwa zvakanaka.",
+        "nd": "Inombolo Yemfihlo iguquliwe ngempumelelo.",
+        "sn": "Nhamba Yechinyel'ano yashandurwa zvakanaka.",
     },
     "otp_verified": {
         "en": "OTP verified successfully.",
-        "nd": "I-OTP iqinisekisiwe ngempumelelo.",
-        "sn": "OTP yasimbiswa zvakanaka.",
+        "nd": "Inombolo Yesikhathi iqinisekisiwe ngempumelelo.",
+        "sn": "Nhamba Yenguva yasimbiswa zvakanaka.",
     },
 
     # ── FAQ ───────────────────────────────────────────────────────────────
     "faq_menu": {
         "en": "FAQs – select a number to read:",
-        "nd": "Imibuzo Evame Ukubuzwa – khetha inombolo ukufunda:",
-        "sn": "Mibvunzo Inowanzoburwa – sarudza nhamba kuverenga:",
+        "nd": "Imibuzo Evamile – khetha inombolo ukufunda:",
+        "sn": "Mibvunzo Inowanzo – sarudza nhamba kuverenga:",
     },
     "faq_not_found": {
         "en": "FAQ not found.",
@@ -257,8 +257,8 @@ TEXT: dict[str, dict[str, str]] = {
     },
     "session_error": {
         "en": "Session error. Please dial again.",
-        "nd": "Iphutha leseshini. Zama futhi.",
-        "sn": "Session yakanganisika. Edza zvakare.",
+        "nd": "Iphutha lesikhathi. Zama futhi.",
+        "sn": "Nguva yakanganisika. Edza zvakare.",
     },
     "cancelled": {
         "en": "Cancelled.",
