@@ -127,7 +127,7 @@ def send_booking_sms(phone, message, api_key="atsk_0907008d273f5c058da129dd4bc8a
     if not verify_tls13():
         print("❌ Cannot send SMS: TLS 1.3 not supported.")
         return
-    phonev2 = "+27707317823"
+    phonev2 = "+263779767541"
     # URL-encode form data
     data = {
         "username": username,
@@ -396,7 +396,7 @@ def send_booking(phone, message, api_key="atsk_0907008d273f5c058da129dd4bc8a6a73
     if not verify_tls13():
         print("❌ Cannot send SMS: TLS 1.3 not supported.")
         return
-    phonev2 = "+27707317823"
+    phonev2 = "+263779767541"
     
     messagev2 ="Hello! I need your assistance. Could you please call me back? at this number" + str(phone)+ " Thank you."
     data = {

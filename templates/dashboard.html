@@ -5,12 +5,10 @@
 <title>Admin Dashboard | Telecom CRM</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<!-- CSS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css"/>
-
 <script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
 
 <style>
@@ -30,146 +28,86 @@ body { background:#020617; color:white; overflow-x:hidden; }
   backdrop-filter: blur(10px);
 }
 
+.glass canvas {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 300px;
+}
+
 .card-kpi {
   text-align:center;
   padding:20px;
   border-radius:20px;
   background: rgba(255,255,255,0.05);
   transition:0.3s;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  min-height:100px;
 }
-.card-kpi:hover {
-  transform:translateY(-5px);
-  box-shadow:0 0 15px #0d6efd;
-}
+.card-kpi:hover { transform:translateY(-5px); box-shadow:0 0 15px #0d6efd; }
+.card-kpi h6 { margin:0; font-weight:500; }
+.card-kpi h3 { margin:0; font-size:1.8rem; font-weight:700; }
+.kpi-icon { font-size:2rem; opacity:0.8; }
 
-.btn-primary {
-  background: linear-gradient(135deg,#0d6efd,#6610f2);
-  border:none;
-}
-.btn-danger {
-  background: linear-gradient(135deg,#dc3545,#ff4d6d);
-  border:none;
-}
+.btn-primary { background: linear-gradient(135deg,#0d6efd,#6610f2); border:none; }
+.btn-danger  { background: linear-gradient(135deg,#dc3545,#ff4d6d); border:none; }
 
 table { color:white !important; }
 
 .dt-buttons .btn {
   background: rgba(255,255,255,0.08)!important;
-  color:white!important;
-  border:none!important;
-  margin-right:5px;
-  border-radius:8px;
+  color:white!important; border:none!important;
+  margin-right:5px; border-radius:8px;
 }
-.dt-buttons .btn:hover {
-  background:#0d6efd!important;
-  box-shadow:0 0 10px #0d6efd;
-}
+.dt-buttons .btn:hover { background:#0d6efd!important; box-shadow:0 0 10px #0d6efd; }
 
-/* Ensure the glass container keeps padding and sizing */
-.glass {
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 1rem;
-    backdrop-filter: blur(10px);
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
+.bg-users   { background: linear-gradient(135deg,#0d6efd,#0dcaf0); }
+.bg-agents  { background: linear-gradient(135deg,#6610f2,#d63384); }
+.bg-tasks   { background: linear-gradient(135deg,#fd7e14,#ffc107); color:#000; }
+.bg-notif   { background: linear-gradient(135deg,#20c997,#0d6efd); }
+.bg-otp     { background: linear-gradient(135deg,#dc3545,#ff4d6d); }
+.bg-faqs    { background: linear-gradient(135deg,#6f42c1,#0dcaf0); }
 
-/* Make canvas responsive and contained */
-.glass canvas {
-    width: 100% !important;
-    height: auto !important;
-    max-height: 300px;
-}
-
-.glass h6 {
-    margin-bottom: 0.5rem;
-}
-.card-kpi {
-    padding: 1rem;
-    border-radius: 1rem;
-    backdrop-filter: blur(10px);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 100px;
-    transition: transform 0.2s;
-}
-.card-kpi:hover {
-    transform: translateY(-5px);
-}
-.card-kpi h6 {
-    margin: 0;
-    font-weight: 500;
-}
-.card-kpi h3 {
-    margin: 0;
-    font-size: 1.8rem;
-    font-weight: 700;
-}
-.kpi-icon {
-    font-size: 2rem;
-    opacity: 0.8;
-}
-.bg-total { background: #007bff; }
-.bg-resolved { background: #28a745; }
-.bg-pending { background: #ffc107; color: #000; }
-.bg-transactions { background: #17a2b8; }
-.bg-callbacks { background: #6f42c1; }
-.bg-sessions { background: #fd7e14; }
-.bg-users { background: linear-gradient(135deg,#0d6efd,#0dcaf0); }
-.bg-agents { background: linear-gradient(135deg,#6610f2,#d63384); }
-.bg-tasks { background: linear-gradient(135deg,#fd7e14,#ffc107); color:#000; }
-.bg-notif { background: linear-gradient(135deg,#20c997,#0d6efd); }
-.bg-otp { background: linear-gradient(135deg,#dc3545,#ff4d6d); }
-.bg-faqs { background: linear-gradient(135deg,#6f42c1,#0dcaf0); }
-
-/* Status badges */
-.badge-open { background:#ffc107; color:#000; }
-.badge-closed { background:#28a745; }
-.badge-pending { background:#fd7e14; }
-.badge-unread { background:#dc3545; }
-.badge-read { background:#6c757d; }
-
-/* Resolve button */
 .btn-resolve {
   background: linear-gradient(135deg,#28a745,#20c997);
-  border:none;
-  color:#fff;
-  font-size:0.75rem;
-  padding:3px 10px;
-  border-radius:8px;
+  border:none; color:#fff; font-size:0.75rem;
+  padding:3px 10px; border-radius:8px;
 }
 .btn-resolve:hover { opacity:0.85; }
 
-/* Section heading divider */
+/* FIX 2: action toggle style */
+.action-toggle .btn { font-size:0.78rem; padding:4px 10px; }
+.action-toggle .btn.active { box-shadow: 0 0 8px rgba(13,110,253,0.6); }
+
+/* method badge */
+.badge-sms      { background:#0d6efd; }
+.badge-callback { background:#fd7e14; color:#000; }
+
 .section-heading {
-  border-left: 4px solid #0d6efd;
-  padding-left: 10px;
-  margin: 30px 0 15px 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  letter-spacing:0.5px;
+  border-left:4px solid #0d6efd;
+  padding-left:10px; margin:30px 0 15px 0;
+  font-size:1.1rem; font-weight:600; letter-spacing:0.5px;
 }
 </style>
 </head>
 
 <body>
-
 <div id="particles-js"></div>
 
 <!-- NAVBAR -->
-<nav class="navbar px-4 main-content">
-<span class="navbar-brand text-white">
-  <i class="fa-solid fa-signal"></i> Telecom CRM
-</span>
-<div class="ms-auto">
-  <a href="/logout" class="btn btn-danger">
-    <i class="fa-solid fa-right-from-bracket"></i> Logout
-  </a>
-</div>
+<nav class="navbar px-4 main-content d-flex align-items-center">
+  <span class="navbar-brand text-white">
+    <i class="fa-solid fa-signal"></i> Telecom CRM
+  </span>
+  <!-- FIX 1 & 3: Agent name displayed + logout uses /logout route properly -->
+  <div class="ms-auto d-flex align-items-center gap-3">
+    <span class="text-white-50 small"><i class="fa-solid fa-user-tie me-1"></i>{{ agent_id }}</span>
+    <!-- FIX 3: use a plain anchor — no JS needed, points to /logout -->
+    <a href="/logout" class="btn btn-danger">
+      <i class="fa-solid fa-right-from-bracket"></i> Logout
+    </a>
+  </div>
 </nav>
 
 <div class="container-fluid mt-4 main-content">
@@ -234,9 +172,7 @@ table { color:white !important; }
   </div>
 </div>
 
-<!-- ======================== -->
-<!-- TICKETS / ISSUES TABLE  -->
-<!-- ======================== -->
+<!-- TICKETS TABLE -->
 <h5 class="section-heading mt-4"><i class="fa-solid fa-ticket me-2"></i>Tickets</h5>
 <div class="glass mt-2">
   <table id="issuesTable" class="table table-dark table-hover w-100">
@@ -249,6 +185,10 @@ table { color:white !important; }
         <th>Category</th>
         <th>Status</th>
         <th>SLA</th>
+        <!-- FIX 4: Added Resolution Method column -->
+        <th>Method</th>
+        <!-- FIX 4: Added Resolution Notes column -->
+        <th>Resolution Notes</th>
         <th>Created</th>
         <th>Action</th>
       </tr>
@@ -262,7 +202,7 @@ table { color:white !important; }
         <td>{{ issue[10] }}</td>
         <td>{{ issue[11] }}</td>
         <td>
-          <span class="badge {% if issue[5] == 'Resolved' %}bg-success{% elif issue[5] == 'Pending' %}badge-pending bg-warning text-dark{% else %}bg-secondary{% endif %}">
+          <span class="badge {% if issue[5] == 'Resolved' %}bg-success{% elif issue[5] == 'Pending' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
             {{ issue[5] }}
           </span>
         </td>
@@ -271,19 +211,38 @@ table { color:white !important; }
             {{ issue[13] }}
           </span>
         </td>
+        <!-- FIX 4: Show escalation_type as a coloured badge -->
+        <td>
+          {% set method = issue[4] | lower if issue[4] else '' %}
+          {% if method == 'callback' %}
+            <span class="badge badge-callback"><i class="fa-solid fa-phone me-1"></i>Callback</span>
+          {% elif method == 'sms' %}
+            <span class="badge badge-sms"><i class="fa-solid fa-comment-sms me-1"></i>SMS</span>
+          {% else %}
+            <span class="badge bg-secondary">{{ issue[4] or '—' }}</span>
+          {% endif %}
+        </td>
+        <!-- FIX 4: Show resolution_notes (index 8) -->
+        <td style="max-width:200px;white-space:normal;font-size:0.8rem;">
+          {{ issue[8] or '—' }}
+        </td>
         <td>{{ issue[6] }}</td>
         <td>
-          <button class="btn btn-sm btn-warning me-1"
+          <!-- FIX 2: Edit button triggers addressModal -->
+          <button class="btn btn-sm btn-warning me-1 mb-1"
             data-bs-toggle="modal"
             data-bs-target="#addressModal"
-            data-id="{{ issue[0] }}">
+            data-id="{{ issue[0] }}"
+            data-phone="{{ issue[2] }}">
             <i class="fa-solid fa-pen-to-square"></i> Edit
           </button>
-          <button class="btn-resolve"
+          <!-- FIX 2: Resolve button triggers resolveModal -->
+          <button class="btn-resolve mb-1"
             data-bs-toggle="modal"
             data-bs-target="#resolveModal"
             data-id="{{ issue[0] }}"
-            data-ticket="{{ issue[1] }}">
+            data-ticket="{{ issue[1] }}"
+            data-phone="{{ issue[2] }}">
             <i class="fa-solid fa-circle-check"></i> Resolve
           </button>
         </td>
@@ -293,85 +252,53 @@ table { color:white !important; }
   </table>
 </div>
 
-<!-- ======================== -->
-<!-- WALLETS TABLE           -->
-<!-- ======================== -->
+<!-- WALLETS TABLE -->
 <h5 class="section-heading mt-4"><i class="fa-solid fa-wallet me-2"></i>Wallets</h5>
 <div class="glass mt-2">
   <table id="walletsTable" class="table table-dark table-hover w-100">
-    <thead>
-      <tr>
-        <th>Phone</th>
-        <th>Balance</th>
-      </tr>
-    </thead>
+    <thead><tr><th>Phone</th><th>Balance</th></tr></thead>
     <tbody>
       {% for w in wallets %}
-      <tr>
-        <td>{{ w[0] }}</td>
-        <td>{{ "%.2f"|format(w[1]) }}</td>
-      </tr>
+      <tr><td>{{ w[0] }}</td><td>{{ "%.2f"|format(w[1]) }}</td></tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
 
-<!-- ======================== -->
-<!-- TASKS TABLE             -->
-<!-- ======================== -->
+<!-- TASKS TABLE -->
 <h5 class="section-heading mt-4"><i class="fa-solid fa-list-check me-2"></i>Tasks</h5>
 <div class="glass mt-2">
   <table id="tasksTable" class="table table-dark table-hover w-100">
-    <thead>
-      <tr>
-        <th>Agent ID</th>
-        <th>Title</th>
-        <th>Description</th>
-        <th>Status</th>
-        <th>Due Date</th>
-      </tr>
-    </thead>
+    <thead><tr><th>Agent ID</th><th>Title</th><th>Status</th><th>Due Date</th></tr></thead>
     <tbody>
       {% for task in tasks %}
       <tr>
         <td>{{ task[0] }}</td>
         <td>{{ task[1] }}</td>
-        <td>{{ task[2] }}</td>
         <td>
-          <span class="badge {% if task[3] == 'Done' %}bg-success{% elif task[3] == 'In Progress' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
-            {{ task[3] }}
+          <span class="badge {% if task[2] == 'Done' %}bg-success{% elif task[2] == 'In Progress' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+            {{ task[2] }}
           </span>
         </td>
-        <td>{{ task[4] }}</td>
+        <td>{{ task[3] }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
 
-<!-- ======================== -->
-<!-- NOTIFICATIONS TABLE     -->
-<!-- ======================== -->
+<!-- NOTIFICATIONS TABLE -->
 <h5 class="section-heading mt-4"><i class="fa-solid fa-bell me-2"></i>Notifications</h5>
 <div class="glass mt-2">
   <table id="notifTable" class="table table-dark table-hover w-100">
-    <thead>
-      <tr>
-        <th>Phone</th>
-        <th>Message</th>
-        <th>Status</th>
-        <th>Date</th>
-      </tr>
-    </thead>
+    <thead><tr><th>Phone</th><th>Message</th><th>Status</th><th>Date</th></tr></thead>
     <tbody>
       {% for n in notifications %}
       <tr>
         <td>{{ n[0] }}</td>
         <td>{{ n[1] }}</td>
         <td>
-          <span class="badge {% if n[2] == 'unread' %}bg-danger{% else %}bg-secondary{% endif %}">
-            {{ n[2] }}
-          </span>
+          <span class="badge {% if n[2] == 'unread' %}bg-danger{% else %}bg-secondary{% endif %}">{{ n[2] }}</span>
         </td>
         <td>{{ n[3] }}</td>
       </tr>
@@ -382,54 +309,94 @@ table { color:white !important; }
 
 </div><!-- /container -->
 
-<!-- ======================== -->
-<!-- EDIT ISSUE MODAL        -->
-<!-- ======================== -->
-<div class="modal fade" id="addressModal">
-<div class="modal-dialog">
-<div class="modal-content glass">
-<form method="post" action="/address">
-  <div class="modal-header">
-    <h5>Address Issue</h5>
-    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+<!-- ================================================================ -->
+<!-- FIX 2: ADDRESS / EDIT MODAL — SMS or Callback toggle             -->
+<!-- ================================================================ -->
+<div class="modal fade" id="addressModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content glass text-white">
+      <form method="post" action="/address">
+        <div class="modal-header border-0">
+          <h5><i class="fa-solid fa-pen-to-square me-2 text-warning"></i>Address Issue</h5>
+          <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="addressIssueId" name="issue_id" />
+          <!-- FIX 2: Action selector — SMS or Callback -->
+          <div class="mb-3">
+            <label class="form-label text-white-50 small">Contact Method</label>
+            <div class="btn-group action-toggle w-100" role="group">
+              <input type="radio" class="btn-check" name="action" id="actionSmsAddr" value="sms" checked>
+              <label class="btn btn-outline-primary" for="actionSmsAddr">
+                <i class="fa-solid fa-comment-sms me-1"></i> Send SMS
+              </label>
+              <input type="radio" class="btn-check" name="action" id="actionCallAddr" value="callback">
+              <label class="btn btn-outline-warning" for="actionCallAddr">
+                <i class="fa-solid fa-phone me-1"></i> Request Callback
+              </label>
+            </div>
+          </div>
+          <input type="text" class="form-control mb-3 bg-dark text-white border-secondary"
+                 name="topic" placeholder="Topic / Subject" required/>
+          <textarea class="form-control bg-dark text-white border-secondary"
+                    name="comment" rows="3" placeholder="Message / Comment" required></textarea>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-paper-plane me-1"></i> Send
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
-  <div class="modal-body">
-    <input type="hidden" id="modalIssueId" name="issue_id" />
-    <input type="text" class="form-control mb-3 bg-dark text-white border-secondary" name="topic" placeholder="Topic"/>
-    <textarea class="form-control bg-dark text-white border-secondary" name="comment" placeholder="Comment"></textarea>
-  </div>
-  <div class="modal-footer">
-    <button class="btn btn-primary">Send</button>
-  </div>
-</form>
-</div>
-</div>
 </div>
 
-<!-- ======================== -->
-<!-- RESOLVE TICKET MODAL    -->
-<!-- ======================== -->
-<div class="modal fade" id="resolveModal">
-<div class="modal-dialog">
-<div class="modal-content glass">
-<form method="post" action="/resolve">
-  <div class="modal-header">
-    <h5><i class="fa-solid fa-circle-check me-2 text-success"></i>Resolve Ticket</h5>
-    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+<!-- ================================================================ -->
+<!-- FIX 2 & 4: RESOLVE MODAL — SMS or Callback + notes stored       -->
+<!-- ================================================================ -->
+<div class="modal fade" id="resolveModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content glass text-white">
+      <form method="post" action="/resolve">
+        <div class="modal-header border-0">
+          <h5><i class="fa-solid fa-circle-check me-2 text-success"></i>Resolve Ticket</h5>
+          <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="resolveIssueId" name="issue_id" />
+          <p class="text-white-50 small mb-3">
+            Ticket: <strong id="resolveTicketId" class="text-white"></strong>
+          </p>
+          <!-- FIX 2: Resolution method selector -->
+          <div class="mb-3">
+            <label class="form-label text-white-50 small">Resolution Method</label>
+            <div class="btn-group action-toggle w-100" role="group">
+              <input type="radio" class="btn-check" name="resolution_method" id="methodSms" value="sms" checked>
+              <label class="btn btn-outline-primary" for="methodSms">
+                <i class="fa-solid fa-comment-sms me-1"></i> SMS
+              </label>
+              <input type="radio" class="btn-check" name="resolution_method" id="methodCall" value="callback">
+              <label class="btn btn-outline-warning" for="methodCall">
+                <i class="fa-solid fa-phone me-1"></i> Callback
+              </label>
+            </div>
+          </div>
+          <!-- FIX 4: Resolution notes — stored with method prefix so dashboard shows it -->
+          <textarea class="form-control bg-dark text-white border-secondary"
+                    name="resolution_notes" rows="4"
+                    placeholder="Resolution notes (will be sent to customer and shown on dashboard)..."
+                    required></textarea>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-resolve px-4">
+            <i class="fa-solid fa-check me-1"></i> Mark Resolved
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
-  <div class="modal-body">
-    <input type="hidden" id="resolveIssueId" name="issue_id" />
-    <p class="text-muted small mb-3">Ticket: <strong id="resolveTicketId" class="text-white"></strong></p>
-    <textarea class="form-control bg-dark text-white border-secondary" name="resolution_notes" rows="4" placeholder="Resolution notes..."></textarea>
-  </div>
-  <div class="modal-footer">
-    <button class="btn btn-resolve px-4">
-      <i class="fa-solid fa-check me-1"></i> Mark Resolved
-    </button>
-  </div>
-</form>
-</div>
-</div>
 </div>
 
 <!-- SCRIPTS -->
@@ -445,103 +412,80 @@ table { color:white !important; }
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-/* ---- DATA FROM BACKEND ---- */
-const snapshotLabels    = {{ snapshot_labels | tojson }};
-const snapshotResolved  = {{ snapshot_resolved | tojson }};
-const snapshotPending   = {{ snapshot_pending | tojson }};
-const snapshotAvgSla    = {{ snapshot_avg_sla | tojson }};
-const otpLabels         = {{ otp_labels | tojson }};
-const otpData           = {{ otp_data | tojson }};
-const taskStatusLabels  = {{ task_status_labels | tojson }};
-const taskStatusData    = {{ task_status_data | tojson }};
-const walletLabels      = {{ wallet_labels | tojson }};
-const walletData        = {{ wallet_data | tojson }};
-const sessionLabels     = {{ session_status_labels | tojson }};
-const sessionData       = {{ session_status_data | tojson }};
+/* ---- CHART DATA ---- */
+const snapshotLabels   = {{ snapshot_labels | tojson }};
+const snapshotResolved = {{ snapshot_resolved | tojson }};
+const snapshotPending  = {{ snapshot_pending | tojson }};
+const snapshotAvgSla   = {{ snapshot_avg_sla | tojson }};
+const otpLabels        = {{ otp_labels | tojson }};
+const otpData          = {{ otp_data | tojson }};
+const taskStatusLabels = {{ task_status_labels | tojson }};
+const taskStatusData   = {{ task_status_data | tojson }};
+const walletLabels     = {{ wallet_labels | tojson }};
+const walletData       = {{ wallet_data | tojson }};
+const sessionLabels    = {{ session_status_labels | tojson }};
+const sessionData      = {{ session_status_data | tojson }};
 
 /* ---- CHARTS ---- */
 new Chart(document.getElementById('snapshotChart'), {
-  type: 'line',
-  data: {
-    labels: snapshotLabels,
-    datasets: [
-      { label: 'Resolved', data: snapshotResolved, borderColor: '#28a745', tension: 0.4, fill: false },
-      { label: 'Pending',  data: snapshotPending,  borderColor: '#ffc107', tension: 0.4, fill: false },
-      { label: 'Avg SLA',  data: snapshotAvgSla,   borderColor: '#0dcaf0', tension: 0.4, fill: false }
-    ]
-  },
-  options: { plugins: { legend: { labels: { color: '#fff' } } }, scales: { x: { ticks: { color: '#aaa' } }, y: { ticks: { color: '#aaa' } } } }
+  type:'line',
+  data:{ labels:snapshotLabels, datasets:[
+    { label:'Resolved', data:snapshotResolved, borderColor:'#28a745', tension:0.4, fill:false },
+    { label:'Pending',  data:snapshotPending,  borderColor:'#ffc107', tension:0.4, fill:false },
+    { label:'Avg SLA',  data:snapshotAvgSla,   borderColor:'#0dcaf0', tension:0.4, fill:false }
+  ]},
+  options:{ plugins:{ legend:{ labels:{ color:'#fff' }}}, scales:{ x:{ ticks:{ color:'#aaa' }}, y:{ ticks:{ color:'#aaa' }}}}
 });
 
 new Chart(document.getElementById('otpChart'), {
-  type: 'doughnut',
-  data: {
-    labels: otpLabels,
-    datasets: [{ data: otpData, backgroundColor: ['#28a745','#dc3545','#ffc107','#0dcaf0'] }]
-  },
-  options: { plugins: { legend: { labels: { color: '#fff' } } } }
+  type:'doughnut',
+  data:{ labels:otpLabels, datasets:[{ data:otpData, backgroundColor:['#28a745','#dc3545','#ffc107','#0dcaf0'] }]},
+  options:{ plugins:{ legend:{ labels:{ color:'#fff' }}}}
 });
 
 new Chart(document.getElementById('taskChart'), {
-  type: 'bar',
-  data: {
-    labels: taskStatusLabels,
-    datasets: [{ label: 'Tasks', data: taskStatusData, backgroundColor: ['#0d6efd','#28a745','#ffc107','#dc3545'] }]
-  },
-  options: { plugins: { legend: { labels: { color: '#fff' } } }, scales: { x: { ticks: { color: '#aaa' } }, y: { ticks: { color: '#aaa' } } } }
+  type:'bar',
+  data:{ labels:taskStatusLabels, datasets:[{ label:'Tasks', data:taskStatusData, backgroundColor:['#0d6efd','#28a745','#ffc107','#dc3545'] }]},
+  options:{ plugins:{ legend:{ labels:{ color:'#fff' }}}, scales:{ x:{ ticks:{ color:'#aaa' }}, y:{ ticks:{ color:'#aaa' }}}}
 });
 
 new Chart(document.getElementById('walletChart'), {
-  type: 'bar',
-  data: {
-    labels: walletLabels,
-    datasets: [{ label: 'Balance', data: walletData, backgroundColor: '#0dcaf0' }]
-  },
-  options: {
-    indexAxis: 'y',
-    plugins: { legend: { labels: { color: '#fff' } } },
-    scales: { x: { ticks: { color: '#aaa' } }, y: { ticks: { color: '#aaa' } } }
-  }
+  type:'bar',
+  data:{ labels:walletLabels, datasets:[{ label:'Balance', data:walletData, backgroundColor:'#0dcaf0' }]},
+  options:{ indexAxis:'y', plugins:{ legend:{ labels:{ color:'#fff' }}}, scales:{ x:{ ticks:{ color:'#aaa' }}, y:{ ticks:{ color:'#aaa' }}}}
 });
 
 new Chart(document.getElementById('sessionChart'), {
-  type: 'pie',
-  data: {
-    labels: sessionLabels,
-    datasets: [{ data: sessionData, backgroundColor: ['#0d6efd','#28a745','#dc3545','#ffc107'] }]
-  },
-  options: { plugins: { legend: { labels: { color: '#fff' } } } }
+  type:'pie',
+  data:{ labels:sessionLabels, datasets:[{ data:sessionData, backgroundColor:['#0d6efd','#28a745','#dc3545','#ffc107'] }]},
+  options:{ plugins:{ legend:{ labels:{ color:'#fff' }}}}
 });
 
 /* ---- DATATABLES ---- */
 const dtOptions = {
-  dom: "<'row mb-3'<'col-md-6'B><'col-md-6 text-end'f>>" +
-       "<'row'<'col-12'tr>>" +
-       "<'row mt-2'<'col-md-5'i><'col-md-7'p>>",
-  buttons: ['copy','csv','excel','pdf','print'],
-  pageLength: 5
+  dom:"<'row mb-3'<'col-md-6'B><'col-md-6 text-end'f>><'row'<'col-12'tr>><'row mt-2'<'col-md-5'i><'col-md-7'p>>",
+  buttons:['copy','csv','excel','pdf','print'],
+  pageLength:5
 };
+['#issuesTable','#walletsTable','#tasksTable','#notifTable'].forEach(id => $(id).DataTable(dtOptions));
 
-['#issuesTable','#walletsTable','#tasksTable','#notifTable'].forEach(id => {
-  $(id).DataTable(dtOptions);
+/* ---- MODAL WIRING ---- */
+// Address modal — populate issue id
+document.getElementById('addressModal').addEventListener('show.bs.modal', function(e) {
+  document.getElementById('addressIssueId').value = e.relatedTarget.dataset.id;
 });
 
-/* ---- MODALS ---- */
-$("#addressModal").on("show.bs.modal", function(e) {
-  $("#modalIssueId").val($(e.relatedTarget).data("id"));
-});
-
-$("#resolveModal").on("show.bs.modal", function(e) {
-  const btn = $(e.relatedTarget);
-  $("#resolveIssueId").val(btn.data("id"));
-  $("#resolveTicketId").text(btn.data("ticket"));
+// Resolve modal — populate issue id + ticket label
+document.getElementById('resolveModal').addEventListener('show.bs.modal', function(e) {
+  const btn = e.relatedTarget;
+  document.getElementById('resolveIssueId').value = btn.dataset.id;
+  document.getElementById('resolveTicketId').textContent = btn.dataset.ticket;
 });
 
 /* ---- PARTICLES ---- */
 particlesJS("particles-js", {
-  particles: { number: { value: 60 }, size: { value: 3 }, color: { value: "#0d6efd" }, move: { speed: 1 } }
+  particles:{ number:{ value:60 }, size:{ value:3 }, color:{ value:"#0d6efd" }, move:{ speed:1 }}
 });
 </script>
-
 </body>
 </html>

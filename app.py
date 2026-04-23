@@ -358,7 +358,7 @@ def address():
     row = c.fetchone()
     conn.close()
 
-    phone = "+27707317823"
+    phone = "+263779767541"
     if not phone:
         return redirect('/')
 
@@ -482,7 +482,7 @@ def resolve_issue():
     agent_id         = session['agent_id']
 
 
-    phone = "+27707317823"
+    phone = "+263779767541"
     if not phone:
         return redirect('/')
 
