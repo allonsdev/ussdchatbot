@@ -76,19 +76,37 @@ table { color:white !important; }
 }
 .btn-resolve:hover { opacity:0.85; }
 
-/* FIX 2: action toggle style */
-.action-toggle .btn { font-size:0.78rem; padding:4px 10px; }
-.action-toggle .btn.active { box-shadow: 0 0 8px rgba(13,110,253,0.6); }
+.btn-sms-action {
+  background: linear-gradient(135deg,#0d6efd,#0dcaf0);
+  border:none; color:#fff; font-size:0.72rem;
+  padding:3px 9px; border-radius:7px; cursor:pointer;
+  display:inline-flex; align-items:center; gap:4px;
+  white-space:nowrap;
+}
+.btn-sms-action:hover { opacity:0.85; box-shadow:0 0 8px #0d6efd; }
 
-/* method badge */
-.badge-sms      { background:#0d6efd; }
-.badge-callback { background:#fd7e14; color:#000; }
+.btn-callback-action {
+  background: linear-gradient(135deg,#fd7e14,#ffc107);
+  border:none; color:#000; font-size:0.72rem;
+  padding:3px 9px; border-radius:7px; cursor:pointer;
+  display:inline-flex; align-items:center; gap:4px;
+  white-space:nowrap; font-weight:600;
+}
+.btn-callback-action:hover { opacity:0.85; box-shadow:0 0 8px #fd7e14; }
+
+.action-toggle .btn { font-size:0.78rem; padding:4px 10px; }
 
 .section-heading {
   border-left:4px solid #0d6efd;
   padding-left:10px; margin:30px 0 15px 0;
   font-size:1.1rem; font-weight:600; letter-spacing:0.5px;
 }
+
+/* SMS Compose Modal textarea */
+#smsMessageText { min-height:100px; resize:vertical; }
+
+/* Toast */
+.toast-container { z-index:9999; }
 </style>
 </head>
 
@@ -100,15 +118,25 @@ table { color:white !important; }
   <span class="navbar-brand text-white">
     <i class="fa-solid fa-signal"></i> Telecom CRM
   </span>
-  <!-- FIX 1 & 3: Agent name displayed + logout uses /logout route properly -->
   <div class="ms-auto d-flex align-items-center gap-3">
     <span class="text-white-50 small"><i class="fa-solid fa-user-tie me-1"></i>{{ agent_id }}</span>
-    <!-- FIX 3: use a plain anchor — no JS needed, points to /logout -->
-    <a href="/logout" class="btn btn-danger">
-      <i class="fa-solid fa-right-from-bracket"></i> Logout
-    </a>
+    <form method="post" action="/logout" style="margin:0;">
+      <button type="submit" class="btn btn-danger">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+      </button>
+    </form>
   </div>
 </nav>
+
+<!-- Toast notification -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="actionToast" class="toast align-items-center text-white border-0" role="alert" style="background:rgba(13,110,253,0.85);">
+    <div class="d-flex">
+      <div class="toast-body" id="toastMsg">Action completed.</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
 
 <div class="container-fluid mt-4 main-content">
 <h3 class="mb-4">AI Support Dashboard</h3>
@@ -165,9 +193,6 @@ table { color:white !important; }
     <div class="glass"><h6>Task Status Breakdown</h6><canvas id="taskChart"></canvas></div>
   </div>
   <div class="col-md-6">
-    <div class="glass"><h6>Top Wallet Balances</h6><canvas id="walletChart"></canvas></div>
-  </div>
-  <div class="col-md-6">
     <div class="glass"><h6>Session Status</h6><canvas id="sessionChart"></canvas></div>
   </div>
 </div>
@@ -181,15 +206,11 @@ table { color:white !important; }
         <th>Ticket ID</th>
         <th>Phone</th>
         <th>Issue</th>
-        <th>Priority</th>
-        <th>Category</th>
+        <th>Logged At</th>
         <th>Status</th>
         <th>SLA</th>
-        <!-- FIX 4: Added Resolution Method column -->
         <th>Method</th>
-        <!-- FIX 4: Added Resolution Notes column -->
         <th>Resolution Notes</th>
-        <th>Created</th>
         <th>Action</th>
       </tr>
     </thead>
@@ -199,8 +220,7 @@ table { color:white !important; }
         <td>{{ issue[1] }}</td>
         <td>{{ issue[2] }}</td>
         <td>{{ issue[3] }}</td>
-        <td>{{ issue[10] }}</td>
-        <td>{{ issue[11] }}</td>
+        <td style="font-size:0.8rem; white-space:nowrap;">{{ issue[6] }}</td>
         <td>
           <span class="badge {% if issue[5] == 'Resolved' %}bg-success{% elif issue[5] == 'Pending' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
             {{ issue[5] }}
@@ -211,24 +231,21 @@ table { color:white !important; }
             {{ issue[13] }}
           </span>
         </td>
-        <!-- FIX 4: Show escalation_type as a coloured badge -->
-        <td>
-          {% set method = issue[4] | lower if issue[4] else '' %}
-          {% if method == 'callback' %}
-            <span class="badge badge-callback"><i class="fa-solid fa-phone me-1"></i>Callback</span>
-          {% elif method == 'sms' %}
-            <span class="badge badge-sms"><i class="fa-solid fa-comment-sms me-1"></i>SMS</span>
-          {% else %}
-            <span class="badge bg-secondary">{{ issue[4] or '—' }}</span>
-          {% endif %}
+        <!-- METHOD COLUMN: SMS + Callback buttons -->
+        <td style="white-space:nowrap;">
+          <button class="btn-sms-action mb-1"
+            onclick="openSmsCompose('{{ issue[0] }}','{{ issue[2] }}')">
+            <i class="fa-solid fa-comment-sms"></i> SMS
+          </button>
+          <button class="btn-callback-action mb-1"
+            onclick="initiateCallback('{{ issue[0] }}','{{ issue[2] }}', this)">
+            <i class="fa-solid fa-phone"></i> Callback
+          </button>
         </td>
-        <!-- FIX 4: Show resolution_notes (index 8) -->
         <td style="max-width:200px;white-space:normal;font-size:0.8rem;">
           {{ issue[8] or '—' }}
         </td>
-        <td>{{ issue[6] }}</td>
         <td>
-          <!-- FIX 2: Edit button triggers addressModal -->
           <button class="btn btn-sm btn-warning me-1 mb-1"
             data-bs-toggle="modal"
             data-bs-target="#addressModal"
@@ -236,7 +253,6 @@ table { color:white !important; }
             data-phone="{{ issue[2] }}">
             <i class="fa-solid fa-pen-to-square"></i> Edit
           </button>
-          <!-- FIX 2: Resolve button triggers resolveModal -->
           <button class="btn-resolve mb-1"
             data-bs-toggle="modal"
             data-bs-target="#resolveModal"
@@ -247,19 +263,6 @@ table { color:white !important; }
           </button>
         </td>
       </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-
-<!-- WALLETS TABLE -->
-<h5 class="section-heading mt-4"><i class="fa-solid fa-wallet me-2"></i>Wallets</h5>
-<div class="glass mt-2">
-  <table id="walletsTable" class="table table-dark table-hover w-100">
-    <thead><tr><th>Phone</th><th>Balance</th></tr></thead>
-    <tbody>
-      {% for w in wallets %}
-      <tr><td>{{ w[0] }}</td><td>{{ "%.2f"|format(w[1]) }}</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -310,7 +313,39 @@ table { color:white !important; }
 </div><!-- /container -->
 
 <!-- ================================================================ -->
-<!-- FIX 2: ADDRESS / EDIT MODAL — SMS or Callback toggle             -->
+<!-- SMS COMPOSE MODAL                                                  -->
+<!-- ================================================================ -->
+<div class="modal fade" id="smsComposeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content glass text-white">
+      <div class="modal-header border-0">
+        <h5><i class="fa-solid fa-comment-sms me-2 text-info"></i>Compose SMS</h5>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="smsIssueId" />
+        <div class="mb-3">
+          <label class="form-label text-white-50 small">Recipient</label>
+          <input type="text" id="smsRecipient" class="form-control bg-dark text-white border-secondary" readonly />
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-white-50 small">Message</label>
+          <textarea id="smsMessageText" class="form-control bg-dark text-white border-secondary"
+                    rows="5" placeholder="Type your message to the customer..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="sendSmsFromModal()">
+          <i class="fa-solid fa-paper-plane me-1"></i> Send SMS
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- ADDRESS / EDIT MODAL                                               -->
 <!-- ================================================================ -->
 <div class="modal fade" id="addressModal" tabindex="-1">
   <div class="modal-dialog">
@@ -322,20 +357,6 @@ table { color:white !important; }
         </div>
         <div class="modal-body">
           <input type="hidden" id="addressIssueId" name="issue_id" />
-          <!-- FIX 2: Action selector — SMS or Callback -->
-          <div class="mb-3">
-            <label class="form-label text-white-50 small">Contact Method</label>
-            <div class="btn-group action-toggle w-100" role="group">
-              <input type="radio" class="btn-check" name="action" id="actionSmsAddr" value="sms" checked>
-              <label class="btn btn-outline-primary" for="actionSmsAddr">
-                <i class="fa-solid fa-comment-sms me-1"></i> Send SMS
-              </label>
-              <input type="radio" class="btn-check" name="action" id="actionCallAddr" value="callback">
-              <label class="btn btn-outline-warning" for="actionCallAddr">
-                <i class="fa-solid fa-phone me-1"></i> Request Callback
-              </label>
-            </div>
-          </div>
           <input type="text" class="form-control mb-3 bg-dark text-white border-secondary"
                  name="topic" placeholder="Topic / Subject" required/>
           <textarea class="form-control bg-dark text-white border-secondary"
@@ -353,7 +374,7 @@ table { color:white !important; }
 </div>
 
 <!-- ================================================================ -->
-<!-- FIX 2 & 4: RESOLVE MODAL — SMS or Callback + notes stored       -->
+<!-- RESOLVE MODAL                                                       -->
 <!-- ================================================================ -->
 <div class="modal fade" id="resolveModal" tabindex="-1">
   <div class="modal-dialog">
@@ -368,21 +389,6 @@ table { color:white !important; }
           <p class="text-white-50 small mb-3">
             Ticket: <strong id="resolveTicketId" class="text-white"></strong>
           </p>
-          <!-- FIX 2: Resolution method selector -->
-          <div class="mb-3">
-            <label class="form-label text-white-50 small">Resolution Method</label>
-            <div class="btn-group action-toggle w-100" role="group">
-              <input type="radio" class="btn-check" name="resolution_method" id="methodSms" value="sms" checked>
-              <label class="btn btn-outline-primary" for="methodSms">
-                <i class="fa-solid fa-comment-sms me-1"></i> SMS
-              </label>
-              <input type="radio" class="btn-check" name="resolution_method" id="methodCall" value="callback">
-              <label class="btn btn-outline-warning" for="methodCall">
-                <i class="fa-solid fa-phone me-1"></i> Callback
-              </label>
-            </div>
-          </div>
-          <!-- FIX 4: Resolution notes — stored with method prefix so dashboard shows it -->
           <textarea class="form-control bg-dark text-white border-secondary"
                     name="resolution_notes" rows="4"
                     placeholder="Resolution notes (will be sent to customer and shown on dashboard)..."
@@ -421,8 +427,6 @@ const otpLabels        = {{ otp_labels | tojson }};
 const otpData          = {{ otp_data | tojson }};
 const taskStatusLabels = {{ task_status_labels | tojson }};
 const taskStatusData   = {{ task_status_data | tojson }};
-const walletLabels     = {{ wallet_labels | tojson }};
-const walletData       = {{ wallet_data | tojson }};
 const sessionLabels    = {{ session_status_labels | tojson }};
 const sessionData      = {{ session_status_data | tojson }};
 
@@ -449,12 +453,6 @@ new Chart(document.getElementById('taskChart'), {
   options:{ plugins:{ legend:{ labels:{ color:'#fff' }}}, scales:{ x:{ ticks:{ color:'#aaa' }}, y:{ ticks:{ color:'#aaa' }}}}
 });
 
-new Chart(document.getElementById('walletChart'), {
-  type:'bar',
-  data:{ labels:walletLabels, datasets:[{ label:'Balance', data:walletData, backgroundColor:'#0dcaf0' }]},
-  options:{ indexAxis:'y', plugins:{ legend:{ labels:{ color:'#fff' }}}, scales:{ x:{ ticks:{ color:'#aaa' }}, y:{ ticks:{ color:'#aaa' }}}}
-});
-
 new Chart(document.getElementById('sessionChart'), {
   type:'pie',
   data:{ labels:sessionLabels, datasets:[{ data:sessionData, backgroundColor:['#0d6efd','#28a745','#dc3545','#ffc107'] }]},
@@ -467,20 +465,84 @@ const dtOptions = {
   buttons:['copy','csv','excel','pdf','print'],
   pageLength:5
 };
-['#issuesTable','#walletsTable','#tasksTable','#notifTable'].forEach(id => $(id).DataTable(dtOptions));
+['#issuesTable','#tasksTable','#notifTable'].forEach(id => $(id).DataTable(dtOptions));
 
 /* ---- MODAL WIRING ---- */
-// Address modal — populate issue id
 document.getElementById('addressModal').addEventListener('show.bs.modal', function(e) {
   document.getElementById('addressIssueId').value = e.relatedTarget.dataset.id;
 });
 
-// Resolve modal — populate issue id + ticket label
 document.getElementById('resolveModal').addEventListener('show.bs.modal', function(e) {
   const btn = e.relatedTarget;
   document.getElementById('resolveIssueId').value = btn.dataset.id;
   document.getElementById('resolveTicketId').textContent = btn.dataset.ticket;
 });
+
+/* ---- TOAST HELPER ---- */
+function showToast(msg, color) {
+  const toast = document.getElementById('actionToast');
+  const toastMsg = document.getElementById('toastMsg');
+  toastMsg.textContent = msg;
+  toast.style.background = color || 'rgba(13,110,253,0.85)';
+  new bootstrap.Toast(toast, { delay: 4000 }).show();
+}
+
+/* ---- SMS COMPOSE ---- */
+function openSmsCompose(issueId, phone) {
+  document.getElementById('smsIssueId').value = issueId;
+  document.getElementById('smsRecipient').value = phone;
+  document.getElementById('smsMessageText').value = '';
+  new bootstrap.Modal(document.getElementById('smsComposeModal')).show();
+}
+
+function sendSmsFromModal() {
+  const issueId = document.getElementById('smsIssueId').value;
+  const phone   = document.getElementById('smsRecipient').value;
+  const message = document.getElementById('smsMessageText').value.trim();
+
+  if (!message) {
+    showToast('Please type a message before sending.', 'rgba(220,53,69,0.85)');
+    return;
+  }
+
+  fetch('/send_sms_action', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ issue_id: issueId, phone: phone, message: message })
+  })
+  .then(r => r.json())
+  .then(data => {
+    bootstrap.Modal.getInstance(document.getElementById('smsComposeModal')).hide();
+    showToast('✅ SMS sent to ' + phone, 'rgba(13,110,253,0.85)');
+  })
+  .catch(() => {
+    showToast('❌ Failed to send SMS. Check server logs.', 'rgba(220,53,69,0.85)');
+  });
+}
+
+/* ---- CALLBACK INITIATION ---- */
+function initiateCallback(issueId, phone, btn) {
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending…';
+
+  fetch('/initiate_callback', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ issue_id: issueId, phone: phone })
+  })
+  .then(r => r.json())
+  .then(data => {
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Sent';
+    btn.style.background = 'linear-gradient(135deg,#28a745,#20c997)';
+    btn.style.color = '#fff';
+    showToast('📞 Callback initiated for ' + phone, 'rgba(253,126,20,0.9)');
+  })
+  .catch(() => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-phone"></i> Callback';
+    showToast('❌ Callback failed. Check server logs.', 'rgba(220,53,69,0.85)');
+  });
+}
 
 /* ---- PARTICLES ---- */
 particlesJS("particles-js", {
