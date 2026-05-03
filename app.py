@@ -35,8 +35,8 @@ print(app.secret_key)
 # ================================================================
 
 USERNAME = "sandbox"
-API_KEY = "atsk_0907008d273f5c058da129dd4bc8a6a733dd057c5e7eaa21f118f6c60094845b0748e03a"
-SMS_URL = "https://api.sandbox.africastalking.com/version1/messaging"
+API_KEY  = "atsk_0907008d273f5c058da129dd4bc8a6a733dd057c5e7eaa21f118f6c60094845b0748e03a"
+SMS_URL  = "https://api.sandbox.africastalking.com/version1/messaging"
 
 print("PYTHON EXECUTABLE:", sys.executable)
 print("OPENSSL VERSION:", ssl.OPENSSL_VERSION)
@@ -111,33 +111,45 @@ def verify_tls13(host="api.sandbox.africastalking.com", port=443):
 
 # ================================================================
 # UNIFIED SMS SENDER
-# All SMS sending goes through this single function.
-# Always sends to the fixed number +263779767541 via TLS 1.3 + curl.
+#
+# ALL SMS (OTPs, agent messages, callbacks) are always delivered
+# to the single fixed operations number OPS_NUMBER (+263779767541).
+#
+# Every message body is prefixed with the customer phone so the
+# operator always knows who to act on.
+#
+# _send_to_ops(customer_phone, message)
+#     raw sender — always hits OPS_NUMBER, prefixes body with phone
+#
+# send_sms(customer_phone, message)
+#     general-purpose send (OTPs, plain agent messages)
+#
+# send_callback_request(customer_phone, agent_message=None)
+#     callback notice; agent_message is appended if provided
+#
+# send_booking(phone, message=None)
+#     legacy alias — delegates to send_callback_request
 # ================================================================
 
-def send_booking(phone, message, api_key=API_KEY, username=USERNAME):
+OPS_NUMBER = "+263779767541"
+
+
+def _send_to_ops(customer_phone: str, message: str,
+                 api_key=API_KEY, username=USERNAME):
     """
-    Send an SMS via Africa's Talking sandbox.
-    - `phone`   : the originating customer number (embedded in the message text)
-    - `message` : ignored — a standard callback message is always sent
-    Always delivers to the fixed operations number +263779767541.
+    Core sender: always delivers to OPS_NUMBER.
+    Prefixes body with [customer_phone] so the operator has context.
     """
     if not verify_tls13():
         print("❌ Cannot send SMS: TLS 1.3 not supported.")
         return
 
-    phonev2 = "+263779767541"
-    messagev2 = (
-        "Hello! I need your assistance. "
-        "Could you please call me back? at this number "
-        + str(phone)
-        + " Thank you."
-    )
+    full_message = f"[{customer_phone}] {message}"
 
     data = {
         "username": username,
-        "to": phonev2,
-        "message": messagev2,
+        "to":       OPS_NUMBER,
+        "message":  full_message,
     }
     encoded_data = urllib.parse.urlencode(data)
     cmd = (
@@ -151,6 +163,44 @@ def send_booking(phone, message, api_key=API_KEY, username=USERNAME):
     print(result.stdout.strip())
     if result.stderr.strip():
         print("Errors:", result.stderr.strip())
+
+
+def send_sms(customer_phone: str, message: str,
+             api_key=API_KEY, username=USERNAME):
+    """
+    General-purpose SMS (OTPs, agent messages).
+    customer_phone is embedded in the body; physically sent to OPS_NUMBER.
+    """
+    _send_to_ops(customer_phone, message, api_key, username)
+
+
+def send_callback_request(customer_phone: str, agent_message: str = None,
+                           api_key=API_KEY, username=USERNAME):
+    """
+    Callback notice delivered to OPS_NUMBER.
+    If the agent typed a message it is appended after the standard
+    callback text so the operator has full context.
+    """
+    base = (
+        "Hello! I need your assistance. "
+        "Could you please call me back? at this number "
+        + str(customer_phone)
+        + " Thank you."
+    )
+    if agent_message and agent_message.strip():
+        full = f"{base} | Agent note: {agent_message.strip()}"
+    else:
+        full = base
+    _send_to_ops(customer_phone, full, api_key, username)
+
+
+def send_booking(phone, message=None, api_key=API_KEY, username=USERNAME):
+    """
+    Legacy alias — kept so existing call-sites don't break.
+    Delegates to send_callback_request; passes message as agent_message.
+    """
+    send_callback_request(phone, agent_message=message,
+                           api_key=api_key, username=username)
 
 
 # ================================================================
@@ -210,8 +260,8 @@ def get_ussd_session(session_id):
     if row:
         return {
             "phone": row[0],
-            "step": row[1],
-            "data": json.loads(row[2]) if row[2] else {}
+            "step":  row[1],
+            "data":  json.loads(row[2]) if row[2] else {}
         }
     return None
 
@@ -292,12 +342,14 @@ def generate_otp(phone):
     code = str(random.randint(1000, 9999))
     conn = get_db()
     conn.execute(
-        "INSERT INTO otp_codes (phone, code, status, created_at) VALUES (?, ?, 'PENDING', CURRENT_TIMESTAMP)",
+        "INSERT INTO otp_codes (phone, code, status, created_at) "
+        "VALUES (?, ?, 'PENDING', CURRENT_TIMESTAMP)",
         (phone, code)
     )
     conn.commit()
     conn.close()
-    send_booking(phone, f"Your OTP is {code}")
+    # OTP delivered to OPS_NUMBER; customer phone embedded in body
+    send_sms(phone, f"Your OTP is {code}. Valid for 5 minutes.")
     return code
 
 
@@ -331,7 +383,7 @@ def verify_otp(phone, user_code):
 
 
 # ================================================================
-# WALLET HELPERS
+# WALLET HELPERS (kept for DB compatibility)
 # ================================================================
 
 def get_wallet(phone):
@@ -339,13 +391,11 @@ def get_wallet(phone):
     c = conn.cursor()
     c.execute("SELECT balance FROM wallets WHERE phone=?", (phone,))
     r = c.fetchone()
-
     if not r:
         c.execute("INSERT INTO wallets VALUES (?, ?)", (phone, 100))
         conn.commit()
         conn.close()
         return 100
-
     conn.close()
     return r[0]
 
@@ -353,7 +403,6 @@ def get_wallet(phone):
 def transfer_money(sender, receiver, amount):
     if get_wallet(sender) < amount:
         return False
-
     conn = get_db()
     c = conn.cursor()
     c.execute("UPDATE wallets SET balance = balance - ? WHERE phone=?", (amount, sender))
@@ -384,26 +433,17 @@ TEXT = {
     },
     "enter_pin":      {"en": "Enter your PIN",      "nd": "Faka i-PIN yakho",     "sn": "Isa PIN yako"},
     "enter_otp":      {"en": "Enter OTP",           "nd": "Faka i-OTP",           "sn": "Isa OTP"},
-    "main_menu":      {
-        "en": "1. Wallet\n2. Support\n3. FAQ\n4. Account",
-        "nd": "1. I-Wallet\n2. Usizo\n3. FAQ\n4. I-Akhawunti",
-        "sn": "1. Wallet\n2. Rubatsiro\n3. FAQ\n4. Account"
+    # Wallet removed from main menu
+    "main_menu": {
+        "en": "1. Support\n2. FAQ\n3. Account",
+        "nd": "1. Usizo\n2. FAQ\n3. I-Akhawunti",
+        "sn": "1. Rubatsiro\n2. FAQ\n3. Account"
     },
-    "wallet":         {
-        "en": "1. Balance\n2. Send Money\n3. Mini Statement",
-        "nd": "1. Ibhalansi\n2. Thumela Imali\n3. Umlando",
-        "sn": "1. Balance\n2. Tumira Mari\n3. Nhoroondo"
-    },
-    "support":        {
+    "support": {
         "en": "1. Create Ticket\n2. Track Ticket\n3. Callback",
         "nd": "1. Dala Ithikithi\n2. Landelela\n3. Call back",
         "sn": "1. Gadzira Ticket\n2. Tarisa\n3. Callback"
     },
-    "balance":        {"en": "Your balance is",     "nd": "Imali yakho ngu",      "sn": "Mari yako i"},
-    "sent":           {"en": "Sent",                "nd": "Kuthunyelwe",          "sn": "Watumira"},
-    "insufficient":   {"en": "Insufficient balance","nd": "Imali ayanele",        "sn": "Mari haina kukwana"},
-    "enter_recipient":{"en": "Enter recipient",     "nd": "Faka umamukeli",       "sn": "Isa anogamuchira"},
-    "enter_amount":   {"en": "Enter amount",        "nd": "Faka inani",           "sn": "Isa huwandu"},
     "ticket_created": {"en": "Ticket created",      "nd": "Ithikithi lidaliwe",   "sn": "Ticket yagadzirwa"},
     "enter_issue":    {"en": "Describe issue",      "nd": "Chaza inkinga",        "sn": "Tsanangura dambudziko"},
     "enter_ticket":   {"en": "Enter ticket ID",     "nd": "Faka i-ID",            "sn": "Isa ticket ID"},
@@ -424,10 +464,6 @@ def language_menu():
 
 def main_menu(lang):
     return f"CON {t('welcome', lang)}\n{t('main_menu', lang)}"
-
-
-def wallet_menu(lang):
-    return f"CON {t('wallet', lang)}"
 
 
 def support_menu(lang):
@@ -478,6 +514,7 @@ def login():
     return render_template("login.html")
 
 
+# Accepts GET so the navbar <a href="/logout"> works correctly
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
     session.clear()
@@ -507,13 +544,13 @@ def dashboard():
     c.execute(query, params)
     issues = c.fetchall()
 
-    c.execute("SELECT COUNT(*) FROM users");           users_count          = c.fetchone()[0]
-    c.execute("SELECT COUNT(*) FROM agents");          agents_count         = c.fetchone()[0]
-    c.execute("SELECT COUNT(*) FROM tasks WHERE status!='Done'"); open_tasks_count = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM users");                               users_count          = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM agents");                              agents_count         = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM tasks WHERE status!='Done'");         open_tasks_count     = c.fetchone()[0]
     c.execute("SELECT COUNT(*) FROM notifications WHERE status='unread'"); unread_notifications = c.fetchone()[0]
-    c.execute("SELECT COUNT(*) FROM otp_codes WHERE status='used'");       otp_used_count       = c.fetchone()[0]
-    c.execute("SELECT COUNT(*) FROM sessions");        sessions_count       = c.fetchone()[0]
-    c.execute("SELECT COUNT(*) FROM faqs");            faqs_count           = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM otp_codes WHERE status='used'");      otp_used_count       = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM sessions");                           sessions_count       = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM faqs");                               faqs_count           = c.fetchone()[0]
 
     c.execute("SELECT agent_id, title, status, due_date FROM tasks ORDER BY due_date ASC LIMIT 20")
     tasks = c.fetchall()
@@ -538,14 +575,8 @@ def dashboard():
     task_status_labels = [r[0] for r in task_raw]
     task_status_data   = [r[1] for r in task_raw]
 
-    c.execute("SELECT phone, balance FROM wallets ORDER BY balance DESC LIMIT 10")
-    wallet_raw    = c.fetchall()
-    wallets       = wallet_raw
-    wallet_labels = [r[0] for r in wallet_raw]
-    wallet_data   = [r[1] for r in wallet_raw]
-
     c.execute("SELECT status, COUNT(*) FROM sessions GROUP BY status")
-    session_raw          = c.fetchall()
+    session_raw           = c.fetchall()
     session_status_labels = [r[0] for r in session_raw]
     session_status_data   = [r[1] for r in session_raw]
 
@@ -553,8 +584,8 @@ def dashboard():
 
     return render_template(
         "dashboard.html",
+        agent_id=session['agent_id'],
         issues=issues,
-        wallets=wallets,
         users_count=users_count,
         agents_count=agents_count,
         open_tasks_count=open_tasks_count,
@@ -572,8 +603,6 @@ def dashboard():
         otp_data=otp_data,
         task_status_labels=task_status_labels,
         task_status_data=task_status_data,
-        wallet_labels=wallet_labels,
-        wallet_data=wallet_data,
         session_status_labels=session_status_labels,
         session_status_data=session_status_data,
     )
@@ -604,12 +633,15 @@ def address():
     issue_id = request.form.get('issue_id')
     topic    = request.form.get('topic')
     comment  = request.form.get('comment')
-    message  = f"{topic}: {comment}"
-
-    send_booking("+263779767541", message)
 
     conn = get_db()
     c = conn.cursor()
+    row = c.execute("SELECT phone FROM issues WHERE id=?", (issue_id,)).fetchone()
+    customer_phone = row[0] if row else "unknown"
+
+    # Agent message delivered to OPS_NUMBER with customer phone in body
+    send_sms(customer_phone, f"{topic}: {comment}")
+
     c.execute("""
         UPDATE issues SET resolution_notes=?, category=?, status='pending'
         WHERE id=?
@@ -629,10 +661,14 @@ def resolve_issue():
     resolution_notes = request.form.get('resolution_notes')
     agent_id         = session['agent_id']
 
-    send_booking("+263779767541", f"{issue_id}: {resolution_notes}")
-
     conn = sqlite3.connect("support.db")
     c = conn.cursor()
+    row = c.execute("SELECT phone FROM issues WHERE id=?", (issue_id,)).fetchone()
+    customer_phone = row[0] if row else "unknown"
+
+    # Resolution note sent to OPS_NUMBER with customer phone in body
+    send_sms(customer_phone, f"Ticket {issue_id} resolved: {resolution_notes}")
+
     c.execute("""
         UPDATE issues
         SET status           = 'Resolved',
@@ -653,17 +689,21 @@ def resolve_issue():
 
 @app.route('/send_sms_action', methods=['POST'])
 def send_sms_action():
+    """
+    Agent composes a message in the dashboard.
+    Sent to OPS_NUMBER with the customer phone embedded in the body.
+    """
     if 'agent_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
     data    = request.get_json()
-    phone   = data.get('phone')
+    phone   = data.get('phone', '').strip()
     message = data.get('message', '').strip()
 
     if not phone or not message:
         return jsonify({'error': 'Missing phone or message'}), 400
 
-    send_booking(phone, message)
+    send_sms(phone, message)
 
     conn = sqlite3.connect("support.db")
     c = conn.cursor()
@@ -679,29 +719,78 @@ def send_sms_action():
 
 @app.route('/initiate_callback', methods=['POST'])
 def initiate_callback():
+    """
+    Agent clicks Callback on the dashboard.
+    The standard callback notice PLUS the agent's typed message are both
+    sent to OPS_NUMBER with the customer phone embedded in the body.
+    """
+    if 'agent_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data          = request.get_json()
+    issue_id      = data.get('issue_id')
+    phone         = data.get('phone', '').strip()
+    agent_message = data.get('message', '').strip()   # agent's optional note
+
+    if not phone:
+        return jsonify({'error': 'Missing phone'}), 400
+
+    # Callback notice + agent message both go to OPS_NUMBER
+    send_callback_request(phone, agent_message=agent_message)
+
+    conn = sqlite3.connect("support.db")
+    c = conn.cursor()
+    c.execute("UPDATE issues SET escalation_type='callback' WHERE id=?", (issue_id,))
+    note = "[Callback Initiated] Agent will call customer back"
+    if agent_message:
+        note += f" | Note: {agent_message}"
+    c.execute("""
+        INSERT INTO notifications (phone, message, status, created_at)
+        VALUES (?, ?, 'unread', CURRENT_TIMESTAMP)
+    """, (phone, note))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'status': 'callback_initiated', 'phone': phone})
+
+
+@app.route('/resolve_with_method', methods=['POST'])
+def resolve_with_method():
+    """
+    Auto-resolves an issue after SMS or Callback is used from the Action column.
+    Records the method (sms/callback) and marks the issue Resolved.
+    """
     if 'agent_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
     data     = request.get_json()
     issue_id = data.get('issue_id')
-    phone    = data.get('phone')
+    method   = data.get('method', '')
+    notes    = data.get('notes', f'Resolved via {method}')
+    agent_id = session['agent_id']
 
-    if not phone:
-        return jsonify({'error': 'Missing phone'}), 400
-
-    send_booking(phone, "callback")   # message body is overridden inside send_booking
+    if not issue_id:
+        return jsonify({'error': 'Missing issue_id'}), 400
 
     conn = sqlite3.connect("support.db")
     c = conn.cursor()
-    c.execute("UPDATE issues SET escalation_type='callback' WHERE id=?", (issue_id,))
     c.execute("""
-        INSERT INTO notifications (phone, message, status, created_at)
-        VALUES (?, ?, 'unread', CURRENT_TIMESTAMP)
-    """, (phone, "[Callback Initiated] Agent will call customer back"))
+        UPDATE issues
+        SET status           = 'Resolved',
+            escalation_type  = ?,
+            resolution_notes = ?,
+            agent_id         = ?,
+            closed_at        = CURRENT_TIMESTAMP,
+            sla_status       = CASE
+                                 WHEN sla_due >= CURRENT_TIMESTAMP THEN 'Within SLA'
+                                 ELSE 'Breached'
+                               END
+        WHERE id = ?
+    """, (method, notes, agent_id, issue_id))
     conn.commit()
     conn.close()
 
-    return jsonify({'status': 'callback_initiated', 'phone': phone})
+    return jsonify({'status': 'resolved', 'method': method, 'issue_id': issue_id})
 
 
 # ================================================================

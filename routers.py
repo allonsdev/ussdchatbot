@@ -1,6 +1,6 @@
 """
-router.py
----------
+routers.py
+----------
 Receives the USSD input string, resolves the active session, and delegates
 to the correct state handler in states.py.
 
@@ -8,6 +8,9 @@ This file intentionally contains NO business logic – it only:
   1. Parses raw USSD text
   2. Guards against unauthenticated access
   3. Calls _render_state() from states.py
+
+NOTE: Wallet states have been removed from the protected_states set
+      as the Wallet feature has been removed from the USSD menu.
 """
 
 from session import get_session, update_session
@@ -47,11 +50,10 @@ def route(session_id: str, phone: str, raw_text: str) -> str:
 
     # ------------------------------------------------------------------
     # Guard: states after AUTH require authentication
+    # Wallet states removed as Wallet feature has been removed.
     # ------------------------------------------------------------------
     protected_states = {
         "LANGUAGE", "MAIN_MENU",
-        "WALLET_MENU", "WALLET_BALANCE", "WALLET_SEND_RECIPIENT",
-        "WALLET_SEND_AMOUNT", "WALLET_SEND_CONFIRM", "WALLET_STATEMENT",
         "SUPPORT_MENU", "SUPPORT_CREATE_ISSUE", "SUPPORT_TRACK_ENTER",
         "SUPPORT_CALLBACK",
         "FAQ_LIST", "FAQ_ANSWER",

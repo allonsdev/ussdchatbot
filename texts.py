@@ -114,63 +114,16 @@ TEXT: dict[str, dict[str, str]] = {
         "sn": "Sarudza Mutauro:\n1. Chirungu\n2. Sindebele\n3. Chishona",
     },
 
-    # ── Main menu ─────────────────────────────────────────────────────────
+    # ── Main menu — Wallet REMOVED ────────────────────────────────────────
     "welcome": {
         "en": "Welcome",
         "nd": "Siyakwamukela",
         "sn": "Tinokugamuchirai",
     },
     "main_menu": {
-        "en": "Main Menu:\n1. Wallet\n2. Support\n3. FAQ\n4. Account",
-        "nd": "Menyu Enkulu:\n1. Isikhwama\n2. Usizo\n3. Imibuzo Evamile\n4. I-Akhawunti",
-        "sn": "Menyu Huru:\n1. Sigaba Semari\n2. Rubatsiro\n3. Mibvunzo Inowanzo\n4. Hesapu",
-    },
-
-    # ── Wallet ────────────────────────────────────────────────────────────
-    "wallet_menu": {
-        "en": "Wallet:\n1. Balance\n2. Send Money\n3. Mini Statement",
-        "nd": "Isikhwama:\n1. Ibhalansi\n2. Thumela Imali\n3. Umlando Omfishane",
-        "sn": "Sigaba Semari:\n1. Mari Iripo\n2. Tumira Mari\n3. Nhoroondo Pfupi",
-    },
-    "balance": {
-        "en": "Your balance is",
-        "nd": "Ibhalansi yakho ngu",
-        "sn": "Mari yako iri",
-    },
-    "enter_recipient": {
-        "en": "Enter recipient phone number:",
-        "nd": "Faka inombolo yomamukeli:",
-        "sn": "Isa nhamba yeanogamuchira:",
-    },
-    "enter_amount": {
-        "en": "Enter amount to send:",
-        "nd": "Faka inani lemali elizothunywa:",
-        "sn": "Isa huwandu hwemari yekutumira:",
-    },
-    "confirm_send": {
-        "en": "Send {amount} to {recipient}?\n1. Confirm\n2. Cancel",
-        "nd": "Thumela {amount} ku {recipient}?\n1. Qinisekisa\n2. Khansela",
-        "sn": "Tumira {amount} ku {recipient}?\n1. Simbisa\n2. Kanzura",
-    },
-    "sent": {
-        "en": "Successfully sent {amount} to {recipient}.",
-        "nd": "Kuthunyelwe {amount} ku {recipient}.",
-        "sn": "Watumira {amount} ku {recipient} zvakanaka.",
-    },
-    "insufficient": {
-        "en": "Insufficient balance. Transaction cancelled.",
-        "nd": "Imali ayanele. Umsebenzi ukhansele.",
-        "sn": "Mari haina kukwana. Shanduko yakanzurwa.",
-    },
-    "mini_statement": {
-        "en": "Last {n} transactions:",
-        "nd": "Imisebenzi yokugcina {n}:",
-        "sn": "Zvakaitwa {n} zvakapfuura:",
-    },
-    "no_transactions": {
-        "en": "No transactions found.",
-        "nd": "Ayikho imisebenzi.",
-        "sn": "Hapana zvakaitwa.",
+        "en": "Main Menu:\n1. Support\n2. FAQ\n3. Account",
+        "nd": "Menyu Enkulu:\n1. Usizo\n2. Imibuzo Evamile\n3. I-Akhawunti",
+        "sn": "Menyu Huru:\n1. Rubatsiro\n2. Mibvunzo Inowanzo\n3. Hesapu",
     },
 
     # ── Support ───────────────────────────────────────────────────────────
@@ -279,8 +232,8 @@ def t(key: str, lang: str = "en", **kwargs) -> str:
     Supports Python str.format() placeholders via **kwargs.
 
     Example:
-        t("sent", "sn", amount="5.00", recipient="0771234567")
-        → "Watumira 5.00 ku 0771234567 zvakanaka."
+        t("ticket_created", "sn", tid="TKT001")
+        → "Tiketi ragadzirwa. Nhamba yako: TKT001"
     """
     bucket = TEXT.get(key, {})
     text = bucket.get(lang) or bucket.get("en") or key
