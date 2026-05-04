@@ -49,12 +49,14 @@ DB = "support.db"
 
 
 def get_connection():
+    """Returns a connection with Row factory so columns are accessible by name."""
     conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row
     return conn
 
 
 def get_db():
+    """Raw connection — used by legacy helpers; row_factory NOT set here."""
     return sqlite3.connect(DB)
 
 
@@ -111,24 +113,6 @@ def verify_tls13(host="api.sandbox.africastalking.com", port=443):
 
 # ================================================================
 # UNIFIED SMS SENDER
-#
-# ALL SMS (OTPs, agent messages, callbacks) are always delivered
-# to the single fixed operations number OPS_NUMBER (+263779767541).
-#
-# Every message body is prefixed with the customer phone so the
-# operator always knows who to act on.
-#
-# _send_to_ops(customer_phone, message)
-#     raw sender — always hits OPS_NUMBER, prefixes body with phone
-#
-# send_sms(customer_phone, message)
-#     general-purpose send (OTPs, plain agent messages)
-#
-# send_callback_request(customer_phone, agent_message=None)
-#     callback notice; agent_message is appended if provided
-#
-# send_booking(phone, message=None)
-#     legacy alias — delegates to send_callback_request
 # ================================================================
 
 OPS_NUMBER = "+263779767541"
@@ -136,16 +120,11 @@ OPS_NUMBER = "+263779767541"
 
 def _send_to_ops(customer_phone: str, message: str,
                  api_key=API_KEY, username=USERNAME):
-    """
-    Core sender: always delivers to OPS_NUMBER.
-    Prefixes body with [customer_phone] so the operator has context.
-    """
     if not verify_tls13():
         print("❌ Cannot send SMS: TLS 1.3 not supported.")
         return
 
     full_message = f"[{customer_phone}] {message}"
-
     data = {
         "username": username,
         "to":       OPS_NUMBER,
@@ -158,7 +137,6 @@ def _send_to_ops(customer_phone: str, message: str,
         f'-H "apiKey: {api_key}"'
     )
     result = subprocess.run(shlex.split(cmd), capture_output=True, text=True)
-
     print("\n📩 SMS API Response:")
     print(result.stdout.strip())
     if result.stderr.strip():
@@ -167,20 +145,11 @@ def _send_to_ops(customer_phone: str, message: str,
 
 def send_sms(customer_phone: str, message: str,
              api_key=API_KEY, username=USERNAME):
-    """
-    General-purpose SMS (OTPs, agent messages).
-    customer_phone is embedded in the body; physically sent to OPS_NUMBER.
-    """
     _send_to_ops(customer_phone, message, api_key, username)
 
 
 def send_callback_request(customer_phone: str, agent_message: str = None,
                            api_key=API_KEY, username=USERNAME):
-    """
-    Callback notice delivered to OPS_NUMBER.
-    If the agent typed a message it is appended after the standard
-    callback text so the operator has full context.
-    """
     base = (
         "Hello! I need your assistance. "
         "Could you please call me back? at this number "
@@ -195,10 +164,6 @@ def send_callback_request(customer_phone: str, agent_message: str = None,
 
 
 def send_booking(phone, message=None, api_key=API_KEY, username=USERNAME):
-    """
-    Legacy alias — kept so existing call-sites don't break.
-    Delegates to send_callback_request; passes message as agent_message.
-    """
     send_callback_request(phone, agent_message=message,
                            api_key=api_key, username=username)
 
@@ -348,7 +313,6 @@ def generate_otp(phone):
     )
     conn.commit()
     conn.close()
-    # OTP delivered to OPS_NUMBER; customer phone embedded in body
     send_sms(phone, f"Your OTP is {code}. Valid for 5 minutes.")
     return code
 
@@ -433,7 +397,6 @@ TEXT = {
     },
     "enter_pin":      {"en": "Enter your PIN",      "nd": "Faka i-PIN yakho",     "sn": "Isa PIN yako"},
     "enter_otp":      {"en": "Enter OTP",           "nd": "Faka i-OTP",           "sn": "Isa OTP"},
-    # Wallet removed from main menu
     "main_menu": {
         "en": "1. Support\n2. FAQ\n3. Account",
         "nd": "1. Usizo\n2. FAQ\n3. I-Akhawunti",
@@ -514,7 +477,6 @@ def login():
     return render_template("login.html")
 
 
-# Accepts GET so the navbar <a href="/logout"> works correctly
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
     session.clear()
@@ -526,8 +488,9 @@ def dashboard():
     if 'agent_id' not in session:
         return redirect('/login')
 
-    conn = sqlite3.connect("support.db")
-    c = conn.cursor()
+    # ── Use get_connection() so rows are accessible by column name ──────────
+    conn = get_connection()
+    c    = conn.cursor()
 
     status          = request.args.get("status")
     escalation_type = request.args.get("type")
@@ -542,7 +505,8 @@ def dashboard():
         params.append(escalation_type)
 
     c.execute(query, params)
-    issues = c.fetchall()
+    # Convert to plain dicts so Jinja can use issue.id, issue.status, etc.
+    issues = [dict(row) for row in c.fetchall()]
 
     c.execute("SELECT COUNT(*) FROM users");                               users_count          = c.fetchone()[0]
     c.execute("SELECT COUNT(*) FROM agents");                              agents_count         = c.fetchone()[0]
@@ -639,7 +603,6 @@ def address():
     row = c.execute("SELECT phone FROM issues WHERE id=?", (issue_id,)).fetchone()
     customer_phone = row[0] if row else "unknown"
 
-    # Agent message delivered to OPS_NUMBER with customer phone in body
     send_sms(customer_phone, f"{topic}: {comment}")
 
     c.execute("""
@@ -666,7 +629,6 @@ def resolve_issue():
     row = c.execute("SELECT phone FROM issues WHERE id=?", (issue_id,)).fetchone()
     customer_phone = row[0] if row else "unknown"
 
-    # Resolution note sent to OPS_NUMBER with customer phone in body
     send_sms(customer_phone, f"Ticket {issue_id} resolved: {resolution_notes}")
 
     c.execute("""
@@ -689,10 +651,6 @@ def resolve_issue():
 
 @app.route('/send_sms_action', methods=['POST'])
 def send_sms_action():
-    """
-    Agent composes a message in the dashboard.
-    Sent to OPS_NUMBER with the customer phone embedded in the body.
-    """
     if 'agent_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
@@ -719,23 +677,17 @@ def send_sms_action():
 
 @app.route('/initiate_callback', methods=['POST'])
 def initiate_callback():
-    """
-    Agent clicks Callback on the dashboard.
-    The standard callback notice PLUS the agent's typed message are both
-    sent to OPS_NUMBER with the customer phone embedded in the body.
-    """
     if 'agent_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
     data          = request.get_json()
     issue_id      = data.get('issue_id')
     phone         = data.get('phone', '').strip()
-    agent_message = data.get('message', '').strip()   # agent's optional note
+    agent_message = data.get('message', '').strip()
 
     if not phone:
         return jsonify({'error': 'Missing phone'}), 400
 
-    # Callback notice + agent message both go to OPS_NUMBER
     send_callback_request(phone, agent_message=agent_message)
 
     conn = sqlite3.connect("support.db")
@@ -757,40 +709,60 @@ def initiate_callback():
 @app.route('/resolve_with_method', methods=['POST'])
 def resolve_with_method():
     """
-    Auto-resolves an issue after SMS or Callback is used from the Action column.
-    Records the method (sms/callback) and marks the issue Resolved.
+    Persists Resolved status + escalation_type (method) + resolution_notes
+    in the DB so data survives page refresh.
     """
     if 'agent_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
     data     = request.get_json()
     issue_id = data.get('issue_id')
-    method   = data.get('method', '')
-    notes    = data.get('notes', f'Resolved via {method}')
+    method   = data.get('method', '').strip()          # 'sms' or 'callback'
+    notes    = data.get('notes', f'Resolved via {method}').strip()
     agent_id = session['agent_id']
 
     if not issue_id:
         return jsonify({'error': 'Missing issue_id'}), 400
 
-    conn = sqlite3.connect("support.db")
-    c = conn.cursor()
-    c.execute("""
-        UPDATE issues
-        SET status           = 'Resolved',
-            escalation_type  = ?,
-            resolution_notes = ?,
-            agent_id         = ?,
-            closed_at        = CURRENT_TIMESTAMP,
-            sla_status       = CASE
-                                 WHEN sla_due >= CURRENT_TIMESTAMP THEN 'Within SLA'
-                                 ELSE 'Breached'
-                               END
-        WHERE id = ?
-    """, (method, notes, agent_id, issue_id))
-    conn.commit()
-    conn.close()
+    if not method:
+        return jsonify({'error': 'Missing method'}), 400
 
-    return jsonify({'status': 'resolved', 'method': method, 'issue_id': issue_id})
+    try:
+        conn = sqlite3.connect("support.db")
+        c    = conn.cursor()
+
+        # Persist EVERYTHING: status, method (escalation_type), notes, agent, timestamp, SLA
+        c.execute("""
+            UPDATE issues
+            SET status           = 'Resolved',
+                escalation_type  = ?,
+                resolution_notes = ?,
+                agent_id         = ?,
+                closed_at        = CURRENT_TIMESTAMP,
+                sla_status       = CASE
+                                     WHEN sla_due >= CURRENT_TIMESTAMP THEN 'Within SLA'
+                                     ELSE 'Breached'
+                                   END
+            WHERE id = ?
+        """, (method, notes, agent_id, issue_id))
+
+        if c.rowcount == 0:
+            conn.close()
+            return jsonify({'error': f'Issue {issue_id} not found'}), 404
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({
+            'status':   'resolved',
+            'method':   method,
+            'notes':    notes,
+            'issue_id': issue_id
+        })
+
+    except Exception as e:
+        app.logger.error("resolve_with_method error: %s", e)
+        return jsonify({'error': str(e)}), 500
 
 
 # ================================================================

@@ -115,7 +115,6 @@ table { color:white !important; }
   </span>
   <div class="ms-auto d-flex align-items-center gap-3">
     <span class="text-white-50 small"><i class="fa-solid fa-user-tie me-1"></i>{{ agent_id }}</span>
-    <!-- FIX: logout now uses GET redirect instead of POST form -->
     <a href="/logout" class="btn btn-danger">
       <i class="fa-solid fa-right-from-bracket"></i> Logout
     </a>
@@ -135,7 +134,7 @@ table { color:white !important; }
 <div class="container-fluid mt-4 main-content">
 <h3 class="mb-4">AI Support Dashboard</h3>
 
-<!-- KPI CARDS — Wallet removed -->
+<!-- KPI CARDS -->
 <div class="row g-3">
   <div class="col-md-4">
     <div class="card-kpi glass bg-users">
@@ -175,7 +174,7 @@ table { color:white !important; }
   </div>
 </div>
 
-<!-- CHARTS — Wallet chart removed -->
+<!-- CHARTS -->
 <div class="row mt-4 g-3">
   <div class="col-md-12">
     <div class="glass"><h6>KPI Snapshots Trend</h6><canvas id="snapshotChart"></canvas></div>
@@ -191,15 +190,13 @@ table { color:white !important; }
   </div>
 </div>
 
-<!-- TICKETS TABLE -->
-<!--
-  COLUMN CHANGES:
-  - Old "Status" badge column REMOVED
-  - Old "Logged At" column renamed to "Status" (shows the status badge)
-  - "Method" column now shows which method was used to reply (sms/callback), populated after action
-  - SMS and Callback buttons moved INTO the Action column
-  - Clicking SMS or Callback auto-resolves the issue and records the method
--->
+<!-- ================================================================
+     TICKETS TABLE
+     issue dict keys (passed from Flask as named dicts):
+       id, ticket_id, phone, issue, escalation_type, status,
+       agent_id, created_at, resolution_notes, closed_at,
+       priority, category, sla_due, sla_status
+     ================================================================ -->
 <h5 class="section-heading mt-4"><i class="fa-solid fa-ticket me-2"></i>Tickets</h5>
 <div class="glass mt-2">
   <table id="issuesTable" class="table table-dark table-hover w-100">
@@ -217,61 +214,73 @@ table { color:white !important; }
     </thead>
     <tbody>
       {% for issue in issues %}
-      <tr id="row-{{ issue[0] }}">
-        <td>{{ issue[1] }}</td>
-        <td>{{ issue[2] }}</td>
-        <td>{{ issue[3] }}</td>
-        <!-- Status column (was "Logged At") — shows badge -->
+      <tr id="row-{{ issue.id }}">
+        <td>{{ issue.ticket_id }}</td>
+        <td>{{ issue.phone }}</td>
+        <td>{{ issue.issue }}</td>
+
+        <!-- Status badge -->
         <td>
-          <span class="badge {% if issue[5] == 'Resolved' %}bg-success{% elif issue[5] == 'Pending' or issue[5] == 'pending' %}bg-warning text-dark{% elif issue[5] == 'CLOSED' or issue[5] == 'closed' %}bg-secondary{% else %}bg-info text-dark{% endif %}">
-            {{ issue[5] }}
+          {% set s = issue.status | lower %}
+          <span class="badge
+            {% if s == 'resolved' %}bg-success
+            {% elif s in ['pending','open'] %}bg-warning text-dark
+            {% elif s in ['closed'] %}bg-secondary
+            {% else %}bg-info text-dark
+            {% endif %}">
+            {{ issue.status }}
           </span>
         </td>
+
+        <!-- SLA badge -->
         <td>
-          <span class="badge {% if issue[13] == 'Breached' %}bg-danger{% else %}bg-success{% endif %}">
-            {{ issue[13] }}
+          <span class="badge {% if issue.sla_status == 'Breached' %}bg-danger{% else %}bg-success{% endif %}">
+            {{ issue.sla_status or 'Within SLA' }}
           </span>
         </td>
-        <!-- Method: shows which method was used (sms/callback), blank until actioned -->
-        <td id="method-{{ issue[0] }}">
-          {% if issue[4] and issue[4] not in ['call', 'sms', 'callback'] %}
-            —
-          {% elif issue[4] == 'sms' %}
+
+        <!-- Method badge — persisted in escalation_type column -->
+        <td id="method-{{ issue.id }}">
+          {% set m = issue.escalation_type | lower if issue.escalation_type else '' %}
+          {% if m == 'sms' %}
             <span class="badge bg-info text-dark"><i class="fa-solid fa-comment-sms me-1"></i>SMS</span>
-          {% elif issue[4] in ['call', 'callback'] %}
+          {% elif m in ['call','callback'] %}
             <span class="badge bg-warning text-dark"><i class="fa-solid fa-phone me-1"></i>Callback</span>
           {% else %}
-            —
+            <span class="badge bg-secondary">{{ issue.escalation_type or '—' }}</span>
           {% endif %}
         </td>
-        <td style="max-width:200px;white-space:normal;font-size:0.8rem;" id="notes-{{ issue[0] }}">
-          {{ issue[8] or '—' }}
+
+        <!-- Resolution notes -->
+        <td style="max-width:200px;white-space:normal;font-size:0.8rem;" id="notes-{{ issue.id }}">
+          {{ issue.resolution_notes or '—' }}
         </td>
-        <!-- Action column: Edit, Resolve, SMS, Callback all here -->
+
+        <!-- Action buttons -->
         <td style="white-space:nowrap; min-width:220px;">
           <div class="d-flex flex-wrap gap-1">
             <button class="btn btn-sm btn-warning"
               data-bs-toggle="modal"
               data-bs-target="#addressModal"
-              data-id="{{ issue[0] }}"
-              data-phone="{{ issue[2] }}">
+              data-id="{{ issue.id }}"
+              data-phone="{{ issue.phone }}">
               <i class="fa-solid fa-pen-to-square"></i> Edit
             </button>
             <button class="btn-resolve"
               data-bs-toggle="modal"
               data-bs-target="#resolveModal"
-              data-id="{{ issue[0] }}"
-              data-ticket="{{ issue[1] }}"
-              data-phone="{{ issue[2] }}">
+              data-id="{{ issue.id }}"
+              data-ticket="{{ issue.ticket_id }}"
+              data-phone="{{ issue.phone }}">
               <i class="fa-solid fa-circle-check"></i> Resolve
             </button>
             <button class="btn-sms-action"
-              onclick="openSmsCompose('{{ issue[0] }}','{{ issue[2] }}')">
+              onclick="openSmsCompose('{{ issue.id }}','{{ issue.phone }}')">
               <i class="fa-solid fa-comment-sms"></i> SMS
             </button>
             <button class="btn-callback-action"
-              id="cb-btn-{{ issue[0] }}"
-              onclick="initiateCallback('{{ issue[0] }}','{{ issue[2] }}', this)">
+              id="cb-btn-{{ issue.id }}"
+              onclick="initiateCallback('{{ issue.id }}','{{ issue.phone }}', this)">
               <i class="fa-solid fa-phone"></i> Callback
             </button>
           </div>
@@ -509,12 +518,6 @@ function openSmsCompose(issueId, phone) {
   new bootstrap.Modal(document.getElementById('smsComposeModal')).show();
 }
 
-/*
-  sendSmsFromModal:
-  - Sends the EXACT message the agent typed (not overridden)
-  - After successful send, auto-resolves the issue and sets method = 'sms'
-  - Updates the Method cell in the row to show SMS badge
-*/
 function sendSmsFromModal() {
   const issueId = document.getElementById('smsIssueId').value;
   const phone   = document.getElementById('smsRecipient').value;
@@ -534,8 +537,6 @@ function sendSmsFromModal() {
   .then(data => {
     bootstrap.Modal.getInstance(document.getElementById('smsComposeModal')).hide();
     showToast('✅ SMS sent to ' + phone, 'rgba(13,110,253,0.85)');
-
-    // Auto-resolve the issue and record method = sms
     autoResolveWithMethod(issueId, phone, 'sms', message);
   })
   .catch(() => {
@@ -543,25 +544,14 @@ function sendSmsFromModal() {
   });
 }
 
-/*
-  initiateCallback:
-  - Sends the callback request to Africa's Talking
-  - After success, auto-resolves the issue and sets method = callback
-  - Updates the Method cell in the row to show Callback badge
-*/
 function initiateCallback(issueId, phone, btn) {
   btn.disabled = true;
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending…';
 
-  // Grab the agent message from the SMS compose modal if it has content
-  const agentMsg = document.getElementById('smsMessageText')
-                    ? document.getElementById('smsMessageText').value.trim()
-                    : '';
-
   fetch('/initiate_callback', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ issue_id: issueId, phone: phone, message: agentMsg })
+    body: JSON.stringify({ issue_id: issueId, phone: phone, message: '' })
   })
   .then(r => r.json())
   .then(data => {
@@ -569,8 +559,6 @@ function initiateCallback(issueId, phone, btn) {
     btn.style.background = 'linear-gradient(135deg,#28a745,#20c997)';
     btn.style.color = '#fff';
     showToast('📞 Callback initiated for ' + phone, 'rgba(253,126,20,0.9)');
-
-    // Auto-resolve the issue and record method = callback
     autoResolveWithMethod(issueId, phone, 'callback', 'Resolved via callback');
   })
   .catch(() => {
@@ -581,9 +569,11 @@ function initiateCallback(issueId, phone, btn) {
 }
 
 /*
-  autoResolveWithMethod:
-  - Calls /resolve_with_method to mark issue as Resolved and record the method
-  - Updates the Method column cell in the table row immediately (no page reload)
+  autoResolveWithMethod
+  ─────────────────────
+  1. Calls /resolve_with_method  → persists status=Resolved, escalation_type=method, notes
+  2. On success updates the DOM immediately so the agent sees feedback right away
+  3. Because data is now in the DB, a page refresh will also show the correct state
 */
 function autoResolveWithMethod(issueId, phone, method, notes) {
   fetch('/resolve_with_method', {
@@ -593,7 +583,21 @@ function autoResolveWithMethod(issueId, phone, method, notes) {
   })
   .then(r => r.json())
   .then(data => {
-    // Update Method column cell
+    if (data.error) {
+      console.error('resolve_with_method error:', data.error);
+      return;
+    }
+
+    /* ── Update Status badge ── */
+    const row = document.getElementById('row-' + issueId);
+    if (row) {
+      const statusCell = row.cells[3];
+      if (statusCell) {
+        statusCell.innerHTML = '<span class="badge bg-success">Resolved</span>';
+      }
+    }
+
+    /* ── Update Method badge ── */
     const methodCell = document.getElementById('method-' + issueId);
     if (methodCell) {
       if (method === 'sms') {
@@ -602,11 +606,13 @@ function autoResolveWithMethod(issueId, phone, method, notes) {
         methodCell.innerHTML = '<span class="badge bg-warning text-dark"><i class="fa-solid fa-phone me-1"></i>Callback</span>';
       }
     }
-    // Update notes cell
+
+    /* ── Update Resolution Notes cell ── */
     const notesCell = document.getElementById('notes-' + issueId);
     if (notesCell && notes) {
       notesCell.textContent = notes;
     }
+
     showToast('✅ Issue #' + issueId + ' marked as Resolved (' + method + ')', 'rgba(40,167,69,0.9)');
   })
   .catch(err => {
