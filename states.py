@@ -28,7 +28,7 @@ Main Menu (Wallet REMOVED):
 
 SMS routing
 ~~~~~~~~~~~
-ALL SMS — OTPs, callback notices — are delivered to OPS_NUMBER (+263779767541).
+ALL SMS — OTPs, callback notices — are delivered to OPS_NUMBERS (both ZIM and SA).
 The customer phone is always embedded in the message body.
 If the agent typed a message it is appended to the callback notice.
 """
@@ -119,12 +119,12 @@ def verify_tls13(host="api.sandbox.africastalking.com", port=443):
 # ================================================================
 # UNIFIED SMS SENDER
 #
-# ALL SMS — OTPs, callback notices — are delivered to OPS_NUMBER.
+# ALL SMS — OTPs, callback notices — are delivered to ALL OPS_NUMBERS.
 # The customer phone is always embedded in the message body.
 # If an agent_message is supplied it is appended to the callback notice.
 #
 # _send_to_ops(customer_phone, message)
-#     raw sender — always hits OPS_NUMBER, prefixes body with phone
+#     raw sender — hits every number in OPS_NUMBERS, prefixes body with phone
 #
 # send_sms(customer_phone, message)
 #     general-purpose (OTPs, plain messages)
@@ -136,13 +136,13 @@ def verify_tls13(host="api.sandbox.africastalking.com", port=443):
 #     legacy alias
 # ================================================================
 
-OPS_NUMBER = "+263779767541"
+OPS_NUMBERS = ["+263779767541", "+27707317823"]
 
 
 def _send_to_ops(customer_phone: str, message: str,
                  api_key=API_KEY, username=USERNAME):
     """
-    Core sender: always delivers to OPS_NUMBER.
+    Core sender: delivers to ALL numbers in OPS_NUMBERS.
     Prefixes body with [customer_phone] for operator context.
     """
     if not verify_tls13():
@@ -151,29 +151,30 @@ def _send_to_ops(customer_phone: str, message: str,
 
     full_message = f"[{customer_phone}] {message}"
 
-    data = {
-        "username": username,
-        "to":       OPS_NUMBER,
-        "message":  full_message,
-    }
-    encoded_data = urllib.parse.urlencode(data)
-    cmd = (
-        f'curl -s -X POST {SMS_URL} '
-        f'-d "{encoded_data}" '
-        f'-H "apiKey: {api_key}"'
-    )
-    result = subprocess.run(shlex.split(cmd), capture_output=True, text=True)
-    print("\n📩 SMS API Response:")
-    print(result.stdout.strip())
-    if result.stderr.strip():
-        print("Errors:", result.stderr.strip())
+    for number in OPS_NUMBERS:
+        data = {
+            "username": username,
+            "to":       number,
+            "message":  full_message,
+        }
+        encoded_data = urllib.parse.urlencode(data)
+        cmd = (
+            f'curl -s -X POST {SMS_URL} '
+            f'-d "{encoded_data}" '
+            f'-H "apiKey: {api_key}"'
+        )
+        result = subprocess.run(shlex.split(cmd), capture_output=True, text=True)
+        print(f"\n📩 SMS API Response (→ {number}):")
+        print(result.stdout.strip())
+        if result.stderr.strip():
+            print("Errors:", result.stderr.strip())
 
 
 def send_sms(customer_phone: str, message: str,
              api_key=API_KEY, username=USERNAME):
     """
     General-purpose SMS (OTPs, plain messages).
-    customer_phone embedded in body; physically sent to OPS_NUMBER.
+    customer_phone embedded in body; physically sent to all OPS_NUMBERS.
     """
     _send_to_ops(customer_phone, message, api_key, username)
 
@@ -181,7 +182,7 @@ def send_sms(customer_phone: str, message: str,
 def send_callback_request(customer_phone: str, agent_message: str = None,
                            api_key=API_KEY, username=USERNAME):
     """
-    Callback notice delivered to OPS_NUMBER.
+    Callback notice delivered to all OPS_NUMBERS.
     If agent_message is provided it is appended after the standard text
     so the operator has full context of what the agent wanted to say.
     """
@@ -221,7 +222,7 @@ def end(text: str) -> str:
 # ================================================================
 
 def _generate_and_store_otp(phone: str) -> str:
-    """Generate a 4-digit OTP, persist it, send to OPS_NUMBER, return code."""
+    """Generate a 4-digit OTP, persist it, send to all OPS_NUMBERS, return code."""
     code = str(random.randint(1000, 9999))
     conn = get_db()
     conn.execute(
@@ -231,9 +232,9 @@ def _generate_and_store_otp(phone: str) -> str:
     conn.commit()
     conn.close()
 
-    # Delivered to OPS_NUMBER; customer phone embedded in body
+    # Delivered to all OPS_NUMBERS; customer phone embedded in body
     send_sms(phone, f"Your OTP is {code}. Valid for 5 minutes.")
-    print(f"[OTP] {phone} → {code} (delivered to {OPS_NUMBER})")
+    print(f"[OTP] {phone} → {code} (delivered to {OPS_NUMBERS})")
     return code
 
 
@@ -432,8 +433,8 @@ def state_auth_pin(session: dict, user_input: str) -> str:
 
 def state_auth_otp_choose(session: dict, user_input: str) -> str:
     """
-    1 → Enter OTP manually (OTP sent now to OPS_NUMBER with customer phone)
-    2 → Send callback request to OPS_NUMBER and end session
+    1 → Enter OTP manually (OTP sent now to all OPS_NUMBERS with customer phone)
+    2 → Send callback request to all OPS_NUMBERS and end session
     """
     sid   = session["session_id"]
     phone = session["phone"]
@@ -597,7 +598,7 @@ def state_support_track_enter(session: dict, user_input: str) -> str:
 def state_support_callback(session: dict, user_input: str) -> str:
     """
     User requested a callback via USSD.
-    Callback notice sent to OPS_NUMBER with customer phone embedded.
+    Callback notice sent to all OPS_NUMBERS with customer phone embedded.
     """
     lang  = session["lang"]
     phone = session["phone"]

@@ -115,32 +115,38 @@ def verify_tls13(host="api.sandbox.africastalking.com", port=443):
 # UNIFIED SMS SENDER
 # ================================================================
 
-OPS_NUMBER = "+263779767541"
+OPS_NUMBERS = ["+263779767541", "+27707317823"]
 
 
 def _send_to_ops(customer_phone: str, message: str,
                  api_key=API_KEY, username=USERNAME):
+    """
+    Core sender: delivers to ALL numbers in OPS_NUMBERS.
+    Prefixes body with [customer_phone] for operator context.
+    """
     if not verify_tls13():
         print("❌ Cannot send SMS: TLS 1.3 not supported.")
         return
 
     full_message = f"[{customer_phone}] {message}"
-    data = {
-        "username": username,
-        "to":       OPS_NUMBER,
-        "message":  full_message,
-    }
-    encoded_data = urllib.parse.urlencode(data)
-    cmd = (
-        f'curl -s -X POST {SMS_URL} '
-        f'-d "{encoded_data}" '
-        f'-H "apiKey: {api_key}"'
-    )
-    result = subprocess.run(shlex.split(cmd), capture_output=True, text=True)
-    print("\n📩 SMS API Response:")
-    print(result.stdout.strip())
-    if result.stderr.strip():
-        print("Errors:", result.stderr.strip())
+
+    for number in OPS_NUMBERS:
+        data = {
+            "username": username,
+            "to":       number,
+            "message":  full_message,
+        }
+        encoded_data = urllib.parse.urlencode(data)
+        cmd = (
+            f'curl -s -X POST {SMS_URL} '
+            f'-d "{encoded_data}" '
+            f'-H "apiKey: {api_key}"'
+        )
+        result = subprocess.run(shlex.split(cmd), capture_output=True, text=True)
+        print(f"\n📩 SMS API Response (→ {number}):")
+        print(result.stdout.strip())
+        if result.stderr.strip():
+            print("Errors:", result.stderr.strip())
 
 
 def send_sms(customer_phone: str, message: str,
